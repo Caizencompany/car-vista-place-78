@@ -1,3 +1,4 @@
+
 import { Heart, Star, Fuel, Calendar, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,9 +8,15 @@ import { Car } from '@/types/car';
 
 interface CarCardProps {
   car: Car;
+  isAdminView?: boolean;
 }
 
-const CarCard = ({ car }: CarCardProps) => {
+const CarCard = ({ car, isAdminView = false }: CarCardProps) => {
+  // Don't render sold cars in the public view unless in admin view
+  if (car.status === 'Vendido' && !isAdminView) {
+    return null;
+  }
+
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',

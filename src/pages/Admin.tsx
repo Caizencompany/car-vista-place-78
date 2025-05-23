@@ -1,17 +1,24 @@
+
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, DollarSign, ShoppingCart, Archive, Tag } from 'lucide-react';
+import { 
+  Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, 
+  DollarSign, ShoppingCart, Archive, Tag, Check, X
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
 import Navbar from '@/components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Car, AdditionalFeature } from '@/types/car';
+import { Car as CarType, AdditionalFeature, BuyerInfo, OwnerInfo } from '@/types/car';
+import CarCard from '@/components/CarCard';
 
 // Mock data for financial dashboard
 const financialData = {
@@ -54,8 +61,8 @@ const financialData = {
   ]
 };
 
-// Updated mockCars with ownership_type
-const mockCars: Car[] = [
+// Updated mockCars with more details
+const mockCars: CarType[] = [
   {
     id: 1,
     name: 'BMW X5 M50i',
@@ -71,6 +78,11 @@ const mockCars: Car[] = [
     purchase_cost: 400000,
     purchase_date: '2023-01-15',
     sale_date: null,
+    additionalFeatures: [
+      { id: 1, name: 'Teto Solar', price: 8000, selected: false },
+      { id: 2, name: 'Bancos de Couro', price: 5000, selected: false }
+    ],
+    image: '/placeholder.svg'
   },
   {
     id: 2,
@@ -83,10 +95,71 @@ const mockCars: Car[] = [
     brand: 'Mercedes',
     category: 'Sedan',
     status: 'Vendido',
-    ownership_type: 'Consignado',
+    ownership_type: 'Próprio',
     purchase_cost: 350000,
     purchase_date: '2023-01-10',
     sale_date: '2023-05-20',
+    buyerInfo: {
+      name: 'Maria Silva',
+      document: '123.456.789-10',
+      paymentMethod: 'Financiamento',
+      saleDate: '2023-05-20',
+      salePrice: 420000
+    },
+    image: '/placeholder.svg'
+  },
+  {
+    id: 3,
+    name: 'Audi A4',
+    price: 380000,
+    year: 2022,
+    mileage: 15000,
+    fuel: 'Gasolina',
+    transmission: 'Automático',
+    brand: 'Audi',
+    category: 'Sedan',
+    status: 'Consignado',
+    ownership_type: 'Consignado',
+    purchase_cost: 0,
+    purchase_date: '2023-03-05',
+    sale_date: null,
+    ownerInfo: {
+      name: 'Carlos Pereira',
+      document: '987.654.321-00',
+      phone: '(11) 98765-4321',
+      email: 'carlos@email.com'
+    },
+    image: '/placeholder.svg'
+  },
+  {
+    id: 4,
+    name: 'Porsche 911',
+    price: 950000,
+    year: 2023,
+    mileage: 5000,
+    fuel: 'Gasolina',
+    transmission: 'Automático',
+    brand: 'Porsche',
+    category: 'Esportivo',
+    status: 'Vendido',
+    ownership_type: 'Consignado',
+    purchase_cost: 0,
+    purchase_date: '2023-02-15',
+    sale_date: '2023-06-10',
+    ownerInfo: {
+      name: 'Roberto Almeida',
+      document: '555.444.333-22',
+      phone: '(11) 91234-5678',
+    },
+    buyerInfo: {
+      name: 'Fernando Costa',
+      document: '222.333.444-55',
+      paymentMethod: 'À Vista',
+      saleDate: '2023-06-10',
+      salePrice: 950000,
+      commission: 47500 // 5% commission
+    },
+    image: '/placeholder.svg'
   }
 ];
 
@@ -97,7 +170,7 @@ const mockAdditionalFeatures: AdditionalFeature[] = [
   { id: 3, name: 'Sistema de Som Premium', price: 7500, selected: false },
   { id: 4, name: 'Rodas de Liga Leve 20"', price: 6000, selected: false },
   { id: 5, name: 'Assistente de Estacionamento', price: 4500, selected: false }
-};
+];
 
 interface FormData {
   name: string;
@@ -114,6 +187,12 @@ interface FormData {
   purchase_cost: string;
   purchase_date: string;
   additionalFeatures: AdditionalFeature[];
+  ownerInfo?: {
+    name: string;
+    document: string;
+    phone: string;
+    email: string;
+  };
 }
 
 interface FeatureFormData {
@@ -121,9 +200,20 @@ interface FeatureFormData {
   price: string;
 }
 
+interface SaleFormData {
+  buyerName: string;
+  buyerDocument: string;
+  paymentMethod: string;
+  saleDate: string;
+  salePrice: string;
+  commission?: string;
+}
+
 const Admin = () => {
-  const [cars, setCars] = useState<Car[]>(mockCars);
+  const [cars, setCars] = useState<CarType[]>(mockCars);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isSaleDialogOpen, setIsSaleDialogOpen] = useState(false);
   const [additionalFeatures, setAdditionalFeatures] = useState<AdditionalFeature[]>(mockAdditionalFeatures);
   const [isAddFeatureDialogOpen, setIsAddFeatureDialogOpen] = useState(false);
   const [featureFormData, setFeatureFormData] = useState<FeatureFormData>({
@@ -146,24 +236,75 @@ const Admin = () => {
     purchase_date: '',
     additionalFeatures: []
   });
+  const [saleFormData, setSaleFormData] = useState<SaleFormData>({
+    buyerName: '',
+    buyerDocument: '',
+    paymentMethod: '',
+    saleDate: new Date().toISOString().split('T')[0],
+    salePrice: '',
+  });
+  const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
+  const [selectedFeatures, setSelectedFeatures] = useState<number[]>([]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Show owner info fields when consigned is selected
+    if (field === 'ownership_type' && value === 'Consignado') {
+      setFormData(prev => ({ 
+        ...prev, 
+        purchase_cost: '0', 
+        ownerInfo: {
+          name: '',
+          document: '',
+          phone: '',
+          email: '',
+        } 
+      }));
+    }
+  };
+
+  const handleOwnerInfoChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      ownerInfo: {
+        ...prev.ownerInfo!,
+        [field]: value
+      }
+    }));
+  };
+  
+  const handleSaleInputChange = (field: string, value: string) => {
+    setSaleFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleFeatureInputChange = (field: string, value: string) => {
     setFeatureFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleFeatureToggle = (featureId: number) => {
+    if (selectedFeatures.includes(featureId)) {
+      setSelectedFeatures(prev => prev.filter(id => id !== featureId));
+    } else {
+      setSelectedFeatures(prev => [...prev, featureId]);
+    }
+  };
+
   const handleAddCar = () => {
-    const newCar: Car = {
+    // Map selected feature IDs to full feature objects
+    const selectedCarFeatures = additionalFeatures
+      .filter(feature => selectedFeatures.includes(feature.id))
+      .map(feature => ({ ...feature }));
+    
+    const newCar: CarType = {
       id: Date.now(),
       ...formData,
       price: parseInt(formData.price) || 0,
       year: parseInt(formData.year) || 0,
       mileage: parseInt(formData.mileage) || 0,
       purchase_cost: parseInt(formData.purchase_cost) || 0,
-      sale_date: null
+      sale_date: null,
+      additionalFeatures: selectedCarFeatures
     };
     
     setCars(prev => [...prev, newCar]);
@@ -183,7 +324,73 @@ const Admin = () => {
       purchase_date: '',
       additionalFeatures: []
     });
+    setSelectedFeatures([]);
     setIsAddDialogOpen(false);
+  };
+
+  const handleMarkAsSold = (car: CarType) => {
+    setSelectedCarId(car.id);
+    
+    // Pre-fill sale price with car price
+    setSaleFormData(prev => ({
+      ...prev,
+      salePrice: car.price.toString(),
+    }));
+    
+    // Add commission field if the car is consigned
+    if (car.ownership_type === 'Consignado') {
+      const suggestedCommission = (car.price * 0.05).toString(); // 5% default commission
+      setSaleFormData(prev => ({
+        ...prev,
+        commission: suggestedCommission
+      }));
+    } else {
+      setSaleFormData(prev => ({
+        ...prev,
+        commission: undefined
+      }));
+    }
+    
+    setIsSaleDialogOpen(true);
+  };
+
+  const handleCompleteSale = () => {
+    if (!selectedCarId) return;
+    
+    setCars(prev => prev.map(car => {
+      if (car.id === selectedCarId) {
+        const buyerInfo: BuyerInfo = {
+          name: saleFormData.buyerName,
+          document: saleFormData.buyerDocument,
+          paymentMethod: saleFormData.paymentMethod,
+          saleDate: saleFormData.saleDate,
+          salePrice: parseInt(saleFormData.salePrice) || car.price,
+        };
+        
+        // Add commission for consigned cars
+        if (car.ownership_type === 'Consignado' && saleFormData.commission) {
+          buyerInfo.commission = parseInt(saleFormData.commission);
+        }
+        
+        return {
+          ...car,
+          status: 'Vendido' as const,
+          sale_date: saleFormData.saleDate,
+          buyerInfo
+        };
+      }
+      return car;
+    }));
+    
+    setIsSaleDialogOpen(false);
+    setSaleFormData({
+      buyerName: '',
+      buyerDocument: '',
+      paymentMethod: '',
+      saleDate: new Date().toISOString().split('T')[0],
+      salePrice: '',
+    });
+    setSelectedCarId(null);
   };
 
   const handleAddFeature = () => {
@@ -281,10 +488,10 @@ const Admin = () => {
   const financialByOwnership = {
     ownCarsRevenue: cars
       .filter(car => car.ownership_type === 'Próprio' && car.status === 'Vendido')
-      .reduce((sum, car) => sum + car.price, 0),
+      .reduce((sum, car) => sum + (car.buyerInfo?.salePrice || car.price), 0),
     consignmentRevenue: cars
       .filter(car => car.ownership_type === 'Consignado' && car.status === 'Vendido')
-      .reduce((sum, car) => sum + car.price * 0.05, 0), // Assuming 5% commission
+      .reduce((sum, car) => sum + (car.buyerInfo?.commission || car.price * 0.05), 0),
   };
 
   // Prepare data for ownership type visualization
@@ -301,6 +508,9 @@ const Admin = () => {
     }
   ];
 
+  const availableCars = cars.filter(car => car.status === 'Disponível');
+  const soldCars = cars.filter(car => car.status === 'Vendido');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -312,9 +522,10 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-            <TabsTrigger value="cars">Gerenciar Carros</TabsTrigger>
+            <TabsTrigger value="cars">Veículos Disponíveis</TabsTrigger>
+            <TabsTrigger value="sold">Veículos Vendidos</TabsTrigger>
             <TabsTrigger value="features">Opcionais</TabsTrigger>
             <TabsTrigger value="financial">Financeiro</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
@@ -371,10 +582,10 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Cars Tab */}
+          {/* Cars Tab (Available Cars) */}
           <TabsContent value="cars" className="space-y-6">
             <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-gray-900">Gerenciar Carros</h2>
+              <h2 className="text-2xl font-bold text-gray-900">Gerenciar Carros Disponíveis</h2>
               
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
@@ -383,7 +594,7 @@ const Admin = () => {
                     Adicionar Carro
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl">
+                <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle>Adicionar Novo Carro</DialogTitle>
                   </DialogHeader>
@@ -440,6 +651,63 @@ const Admin = () => {
                         placeholder="485000"
                       />
                     </div>
+
+                    {/* Show purchase cost only for own cars */}
+                    {formData.ownership_type === 'Próprio' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="purchase_cost">Custo de Aquisição (R$)</Label>
+                        <Input
+                          id="purchase_cost"
+                          type="number"
+                          value={formData.purchase_cost}
+                          onChange={(e) => handleInputChange('purchase_cost', e.target.value)}
+                          placeholder="400000"
+                        />
+                      </div>
+                    )}
+                    
+                    {/* Show owner info fields for consigned cars */}
+                    {formData.ownership_type === 'Consignado' && (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="owner-name">Nome do Proprietário</Label>
+                          <Input
+                            id="owner-name"
+                            value={formData.ownerInfo?.name || ''}
+                            onChange={(e) => handleOwnerInfoChange('name', e.target.value)}
+                            placeholder="Nome completo"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="owner-document">CPF/CNPJ</Label>
+                          <Input
+                            id="owner-document"
+                            value={formData.ownerInfo?.document || ''}
+                            onChange={(e) => handleOwnerInfoChange('document', e.target.value)}
+                            placeholder="000.000.000-00"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="owner-phone">Telefone</Label>
+                          <Input
+                            id="owner-phone"
+                            value={formData.ownerInfo?.phone || ''}
+                            onChange={(e) => handleOwnerInfoChange('phone', e.target.value)}
+                            placeholder="(00) 00000-0000"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="owner-email">Email</Label>
+                          <Input
+                            id="owner-email"
+                            value={formData.ownerInfo?.email || ''}
+                            onChange={(e) => handleOwnerInfoChange('email', e.target.value)}
+                            placeholder="email@exemplo.com"
+                          />
+                        </div>
+                      </>
+                    )}
+                    
                     <div className="space-y-2">
                       <Label htmlFor="year">Ano</Label>
                       <Input
@@ -509,34 +777,6 @@ const Admin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={formData.status} 
-                        onValueChange={(value: 'Disponível' | 'Vendido' | 'Consignado') => handleInputChange('status', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Disponível">Disponível</SelectItem>
-                          <SelectItem value="Vendido">Vendido</SelectItem>
-                          <SelectItem value="Consignado">Consignado</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="purchase_cost">Custo de Aquisição (R$)</Label>
-                      <Input
-                        id="purchase_cost"
-                        type="number"
-                        value={formData.purchase_cost}
-                        onChange={(e) => handleInputChange('purchase_cost', e.target.value)}
-                        placeholder="400000"
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
                       <Label htmlFor="purchase_date">Data de Aquisição</Label>
                       <Input
                         id="purchase_date"
@@ -555,6 +795,28 @@ const Admin = () => {
                         placeholder="Descrição detalhada do veículo..."
                         rows={3}
                       />
+                    </div>
+
+                    {/* Additional Features Section */}
+                    <div className="col-span-2">
+                      <Label className="text-base font-medium mb-2 block">Opcionais Disponíveis</Label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-2">
+                        {additionalFeatures.map(feature => (
+                          <div key={feature.id} className="flex items-center space-x-2">
+                            <Checkbox 
+                              id={`feature-${feature.id}`} 
+                              checked={selectedFeatures.includes(feature.id)}
+                              onCheckedChange={() => handleFeatureToggle(feature.id)}
+                            />
+                            <Label 
+                              htmlFor={`feature-${feature.id}`}
+                              className="text-sm font-medium text-gray-900 cursor-pointer"
+                            >
+                              {feature.name} (+{formatCurrency(feature.price)})
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                   <div className="flex justify-end space-x-2">
@@ -578,29 +840,18 @@ const Admin = () => {
                       <TableHead>Marca</TableHead>
                       <TableHead>Preço</TableHead>
                       <TableHead>Ano</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Propriedade</TableHead>
+                      <TableHead>Opcionais</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cars.map((car) => (
+                    {availableCars.map((car) => (
                       <TableRow key={car.id}>
                         <TableCell className="font-medium">{car.name}</TableCell>
                         <TableCell>{car.brand}</TableCell>
-                        <TableCell>R$ {car.price.toLocaleString()}</TableCell>
+                        <TableCell>{formatCurrency(car.price)}</TableCell>
                         <TableCell>{car.year}</TableCell>
-                        <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            car.status === 'Disponível' 
-                              ? 'bg-green-100 text-green-800' 
-                              : car.status === 'Vendido'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-blue-100 text-blue-800'
-                          }`}>
-                            {car.status}
-                          </span>
-                        </TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                             car.ownership_type === 'Próprio' 
@@ -610,10 +861,21 @@ const Admin = () => {
                             {car.ownership_type}
                           </span>
                         </TableCell>
+                        <TableCell>
+                          {car.additionalFeatures?.length 
+                            ? car.additionalFeatures.length
+                            : "Nenhum"}
+                        </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end space-x-2">
-                            <Button variant="outline" size="sm">
-                              <Edit className="h-4 w-4" />
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="text-green-600 hover:text-green-800"
+                              onClick={() => handleMarkAsSold(car)}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Marcar como vendido
                             </Button>
                             <Button 
                               variant="outline" 
@@ -627,13 +889,171 @@ const Admin = () => {
                         </TableCell>
                       </TableRow>
                     ))}
+                    {availableCars.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          Nenhum carro disponível no estoque.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Sale Dialog */}
+            <Dialog open={isSaleDialogOpen} onOpenChange={setIsSaleDialogOpen}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Registrar Venda</DialogTitle>
+                  <DialogDescription>
+                    Preencha os dados do comprador e da transação.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="buyer-name">Nome do Comprador</Label>
+                    <Input
+                      id="buyer-name"
+                      value={saleFormData.buyerName}
+                      onChange={(e) => handleSaleInputChange('buyerName', e.target.value)}
+                      placeholder="Nome completo"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="buyer-document">CPF/CNPJ</Label>
+                    <Input
+                      id="buyer-document"
+                      value={saleFormData.buyerDocument}
+                      onChange={(e) => handleSaleInputChange('buyerDocument', e.target.value)}
+                      placeholder="000.000.000-00"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="payment-method">Forma de Pagamento</Label>
+                    <Select 
+                      value={saleFormData.paymentMethod} 
+                      onValueChange={(value) => handleSaleInputChange('paymentMethod', value)}
+                    >
+                      <SelectTrigger id="payment-method">
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="À Vista">À Vista</SelectItem>
+                        <SelectItem value="Financiamento">Financiamento</SelectItem>
+                        <SelectItem value="Cartão de Crédito">Cartão de Crédito</SelectItem>
+                        <SelectItem value="Permuta">Permuta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="sale-date">Data da Venda</Label>
+                    <Input
+                      id="sale-date"
+                      type="date"
+                      value={saleFormData.saleDate}
+                      onChange={(e) => handleSaleInputChange('saleDate', e.target.value)}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="sale-price">Valor da Venda (R$)</Label>
+                    <Input
+                      id="sale-price"
+                      type="number"
+                      value={saleFormData.salePrice}
+                      onChange={(e) => handleSaleInputChange('salePrice', e.target.value)}
+                    />
+                  </div>
+                  
+                  {/* Commission field for consigned cars */}
+                  {saleFormData.commission !== undefined && (
+                    <div className="space-y-2">
+                      <Label htmlFor="commission">Valor da Comissão (R$)</Label>
+                      <Input
+                        id="commission"
+                        type="number"
+                        value={saleFormData.commission}
+                        onChange={(e) => handleSaleInputChange('commission', e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsSaleDialogOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleCompleteSale} className="bg-green-600 hover:bg-green-700">
+                    Concluir Venda
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+
+          {/* Sold Cars Tab */}
+          <TabsContent value="sold" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Veículos Vendidos</h2>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Comprador</TableHead>
+                      <TableHead>Data da Venda</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Pagamento</TableHead>
+                      <TableHead>Propriedade</TableHead>
+                      <TableHead>Comissão</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {soldCars.map((car) => (
+                      <TableRow key={car.id}>
+                        <TableCell className="font-medium">{car.name}</TableCell>
+                        <TableCell>{car.buyerInfo?.name || "-"}</TableCell>
+                        <TableCell>{car.buyerInfo?.saleDate || car.sale_date}</TableCell>
+                        <TableCell>{formatCurrency(car.buyerInfo?.salePrice || car.price)}</TableCell>
+                        <TableCell>{car.buyerInfo?.paymentMethod || "-"}</TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            car.ownership_type === 'Próprio' 
+                              ? 'bg-indigo-100 text-indigo-800' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {car.ownership_type}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          {car.ownership_type === 'Consignado' 
+                            ? formatCurrency(car.buyerInfo?.commission || car.price * 0.05)
+                            : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                    {soldCars.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="h-24 text-center">
+                          Nenhum carro vendido ainda.
+                        </TableCell>
+                      </TableRow>
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>
             </Card>
           </TabsContent>
 
-          {/* New Additional Features Tab */}
+          {/* Additional Features Tab */}
           <TabsContent value="features" className="space-y-6">
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Gerenciar Opcionais</h2>
@@ -720,7 +1140,7 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* Updated Financial Dashboard Tab with ownership data */}
+          {/* Financial Tab */}
           <TabsContent value="financial" className="space-y-6">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Dashboard Financeiro</h2>
@@ -900,6 +1320,7 @@ const Admin = () => {
                             {transaction.type}
                           </span>
                         </TableCell>
+                        <TableCell>{transaction.customer}</TableCell>
                         <TableCell>{new Date(transaction.date).toLocaleDateString('pt-BR')}</TableCell>
                         <TableCell className={`text-right font-medium ${
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'

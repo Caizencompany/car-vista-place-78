@@ -6,6 +6,23 @@ export interface AdditionalFeature {
   selected: boolean;
 }
 
+export interface BuyerInfo {
+  name: string;
+  document: string; // CPF or CNPJ
+  paymentMethod: string;
+  saleDate: string;
+  salePrice: number;
+  commission?: number; // For consigned cars
+}
+
+export interface OwnerInfo {
+  name: string;
+  document: string; // CPF or CNPJ
+  phone: string;
+  email?: string;
+  address?: string;
+}
+
 export interface Car {
   id: number;
   name: string;
@@ -27,4 +44,6 @@ export interface Car {
   images?: string[];
   featured?: boolean;
   rating?: number;
+  buyerInfo?: BuyerInfo;
+  ownerInfo?: OwnerInfo;
 }
