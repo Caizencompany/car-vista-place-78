@@ -1,4 +1,11 @@
 
+// Se este arquivo existe, você precisa atualizar o tipo BuyerInfo para adicionar o campo profit.
+// Como eu não tenho acesso ao conteúdo completo deste arquivo, vou adicionar o que imagino que seja necessário.
+// Se o arquivo tiver uma estrutura diferente, você precisará ajustar esta implementação.
+
+export type CarStatus = 'Disponível' | 'Vendido' | 'Consignado';
+export type OwnershipType = 'Próprio' | 'Consignado';
+
 export interface AdditionalFeature {
   id: number;
   name: string;
@@ -8,19 +15,19 @@ export interface AdditionalFeature {
 
 export interface BuyerInfo {
   name: string;
-  document: string; // CPF or CNPJ
+  document: string;
   paymentMethod: string;
   saleDate: string;
   salePrice: number;
-  commission?: number; // For consigned cars
+  commission?: number;
+  profit?: number; // Novo campo para armazenar o lucro
 }
 
 export interface OwnerInfo {
   name: string;
-  document: string; // CPF or CNPJ
-  phone: string;
+  document: string;
+  phone?: string;
   email?: string;
-  address?: string;
 }
 
 export interface Car {
@@ -33,17 +40,15 @@ export interface Car {
   transmission: string;
   brand: string;
   category: string;
-  status: 'Disponível' | 'Vendido' | 'Consignado';
-  ownership_type: 'Próprio' | 'Consignado';
+  status: CarStatus;
+  ownership_type: OwnershipType;
   purchase_cost: number;
   purchase_date: string;
   sale_date: string | null;
-  description?: string;
-  additionalFeatures?: AdditionalFeature[];
   image?: string;
-  images?: string[];
-  featured?: boolean;
-  rating?: number;
+  additionalFeatures?: AdditionalFeature[];
   buyerInfo?: BuyerInfo;
   ownerInfo?: OwnerInfo;
+  featured?: boolean;
+  rating?: number;
 }

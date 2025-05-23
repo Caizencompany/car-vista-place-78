@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, 
@@ -15,6 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormField, FormItem, FormLabel, FormControl } from '@/components/ui/form';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import Navbar from '@/components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { Car as CarType, AdditionalFeature, BuyerInfo, OwnerInfo } from '@/types/car';
@@ -209,6 +211,12 @@ interface SaleFormData {
   commission?: string;
 }
 
+interface PurchaseCostDialogData {
+  isOpen: boolean;
+  carId: number | null;
+  purchaseCost: string;
+}
+
 const Admin = () => {
   const [cars, setCars] = useState<CarType[]>(mockCars);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -245,22 +253,38 @@ const Admin = () => {
   });
   const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
   const [selectedFeatures, setSelectedFeatures] = useState<number[]>([]);
+  
+  // Novo state para o popup de valor de compra
+  const [purchaseCostDialog, setPurchaseCostDialog] = useState<PurchaseCostDialogData>({
+    isOpen: false,
+    carId: null,
+    purchaseCost: ''
+  });
+  
+  const { toast } = useToast();
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Show owner info fields when consigned is selected
-    if (field === 'ownership_type' && value === 'Consignado') {
-      setFormData(prev => ({ 
-        ...prev, 
-        purchase_cost: '0', 
-        ownerInfo: {
-          name: '',
-          document: '',
-          phone: '',
-          email: '',
-        } 
-      }));
+    // Se o tipo de propriedade for alterado para 'Próprio', exibe o popup de custo de compra
+    if (field === 'ownership_type') {
+      if (value === 'Próprio') {
+        setFormData(prev => ({ 
+          ...prev, 
+          ownerInfo: undefined
+        }));
+      } else if (value === 'Consignado') {
+        setFormData(prev => ({ 
+          ...prev, 
+          purchase_cost: '0', 
+          ownerInfo: {
+            name: '',
+            document: '',
+            phone: '',
+            email: '',
+          } 
+        }));
+      }
     }
   };
 
@@ -287,6 +311,38 @@ const Admin = () => {
       setSelectedFeatures(prev => prev.filter(id => id !== featureId));
     } else {
       setSelectedFeatures(prev => [...prev, featureId]);
+    }
+  };
+  
+  const handlePurchaseCostChange = (value: string) => {
+    setPurchaseCostDialog(prev => ({ ...prev, purchaseCost: value }));
+  };
+  
+  const handlePurchaseCostConfirm = () => {
+    setFormData(prev => ({
+      ...prev,
+      purchase_cost: purchaseCostDialog.purchaseCost
+    }));
+    setPurchaseCostDialog({
+      isOpen: false,
+      carId: null,
+      purchaseCost: ''
+    });
+    toast({
+      title: "Valor de compra registrado",
+      description: `R$ ${parseInt(purchaseCostDialog.purchaseCost).toLocaleString()} foi definido como valor de compra.`,
+    });
+  };
+
+  const handleOwnershipTypeChange = (value: 'Próprio' | 'Consignado') => {
+    handleInputChange('ownership_type', value);
+    if (value === 'Próprio') {
+      // Abre o popup para informar o valor de compra
+      setPurchaseCostDialog({
+        isOpen: true,
+        carId: null,
+        purchaseCost: formData.purchase_cost || ''
+      });
     }
   };
 
@@ -326,6 +382,11 @@ const Admin = () => {
     });
     setSelectedFeatures([]);
     setIsAddDialogOpen(false);
+    
+    toast({
+      title: "Carro adicionado",
+      description: `${newCar.name} foi adicionado ao seu estoque.`,
+    });
   };
 
   const handleMarkAsSold = (car: CarType) => {
@@ -372,6 +433,13 @@ const Admin = () => {
           buyerInfo.commission = parseInt(saleFormData.commission);
         }
         
+        // Calcular lucro para carros próprios
+        if (car.ownership_type === 'Próprio') {
+          const salePrice = parseInt(saleFormData.salePrice) || car.price;
+          const profit = salePrice - car.purchase_cost;
+          buyerInfo.profit = profit;
+        }
+        
         return {
           ...car,
           status: 'Vendido' as const,
@@ -391,6 +459,11 @@ const Admin = () => {
       salePrice: '',
     });
     setSelectedCarId(null);
+    
+    toast({
+      title: "Venda registrada",
+      description: "A venda foi registrada com sucesso.",
+    });
   };
 
   const handleAddFeature = () => {
@@ -411,6 +484,11 @@ const Admin = () => {
 
   const handleDeleteCar = (id: number) => {
     setCars(prev => prev.filter(car => car.id !== id));
+    
+    toast({
+      title: "Carro removido",
+      description: "O carro foi removido do seu estoque.",
+    });
   };
 
   const handleDeleteFeature = (id: number) => {
@@ -507,6 +585,15 @@ const Admin = () => {
       color: '#a78bfa' 
     }
   ];
+
+  // Calcular a soma do lucro dos carros próprios vendidos
+  const totalProfit = cars
+    .filter(car => car.ownership_type === 'Próprio' && car.status === 'Vendido' && car.buyerInfo)
+    .reduce((sum, car) => {
+      const salePrice = car.buyerInfo?.salePrice || car.price;
+      const profit = salePrice - car.purchase_cost;
+      return sum + profit;
+    }, 0);
 
   const availableCars = cars.filter(car => car.status === 'Disponível');
   const soldCars = cars.filter(car => car.status === 'Vendido');
@@ -624,12 +711,12 @@ const Admin = () => {
                       </Select>
                     </div>
                     
-                    {/* Added ownership_type field */}
+                    {/* Modified ownership_type field to use custom handler */}
                     <div className="space-y-2">
                       <Label htmlFor="ownership_type">Tipo de Propriedade</Label>
                       <Select 
                         value={formData.ownership_type} 
-                        onValueChange={(value: 'Próprio' | 'Consignado') => handleInputChange('ownership_type', value)}
+                        onValueChange={(value: 'Próprio' | 'Consignado') => handleOwnershipTypeChange(value)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o tipo" />
@@ -642,7 +729,7 @@ const Admin = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label htmlFor="price">Preço (R$)</Label>
+                      <Label htmlFor="price">Preço de Venda (R$)</Label>
                       <Input
                         id="price"
                         type="number"
@@ -1013,7 +1100,7 @@ const Admin = () => {
                       <TableHead>Valor</TableHead>
                       <TableHead>Pagamento</TableHead>
                       <TableHead>Propriedade</TableHead>
-                      <TableHead>Comissão</TableHead>
+                      <TableHead>Lucro/Comissão</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -1034,9 +1121,17 @@ const Admin = () => {
                           </span>
                         </TableCell>
                         <TableCell>
-                          {car.ownership_type === 'Consignado' 
-                            ? formatCurrency(car.buyerInfo?.commission || car.price * 0.05)
-                            : "-"}
+                          {car.ownership_type === 'Próprio' ? (
+                            <span className={`font-medium ${
+                              (car.buyerInfo?.salePrice || car.price) > car.purchase_cost 
+                                ? 'text-green-600' 
+                                : 'text-red-600'
+                            }`}>
+                              {formatCurrency((car.buyerInfo?.salePrice || car.price) - car.purchase_cost)}
+                            </span>
+                          ) : (
+                            formatCurrency(car.buyerInfo?.commission || car.price * 0.05)
+                          )}
                         </TableCell>
                       </TableRow>
                     ))}
@@ -1195,8 +1290,8 @@ const Admin = () => {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-600">Lucro Estimado</p>
-                      <p className="text-3xl font-bold text-gray-900">{formatCurrency(financialData.revenue.total - financialData.costs.total)}</p>
+                      <p className="text-sm font-medium text-gray-600">Lucro Total</p>
+                      <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalProfit)}</p>
                     </div>
                     <div className="bg-orange-500 p-3 rounded-full">
                       <BarChart3 className="h-6 w-6 text-white" />
@@ -1205,6 +1300,43 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Adicionado: Resumo de vendas próprias */}
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Resumo Financeiro - Veículos Próprios</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Total Investido</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(
+                        cars.filter(car => car.ownership_type === 'Próprio')
+                          .reduce((sum, car) => sum + car.purchase_cost, 0)
+                      )}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Total Vendido</p>
+                    <p className="text-2xl font-bold">
+                      {formatCurrency(
+                        cars.filter(car => car.ownership_type === 'Próprio' && car.status === 'Vendido')
+                          .reduce((sum, car) => sum + (car.buyerInfo?.salePrice || car.price), 0)
+                      )}
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">Lucro Total</p>
+                    <p className={`text-2xl font-bold ${totalProfit > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {formatCurrency(totalProfit)}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Charts Section with ownership visualization */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1375,6 +1507,42 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Popup para informar valor de compra */}
+      <AlertDialog 
+        open={purchaseCostDialog.isOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setPurchaseCostDialog(prev => ({ ...prev, isOpen: false }));
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Valor de compra</AlertDialogTitle>
+            <AlertDialogDescription>
+              Informe o valor que foi pago na compra deste veículo.
+              Este valor será usado para calcular o lucro quando o veículo for vendido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <div className="space-y-2">
+              <Label htmlFor="purchase-cost-input">Valor de Compra (R$)</Label>
+              <Input
+                id="purchase-cost-input"
+                type="number"
+                value={purchaseCostDialog.purchaseCost}
+                onChange={(e) => handlePurchaseCostChange(e.target.value)}
+                placeholder="400000"
+              />
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handlePurchaseCostConfirm}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
