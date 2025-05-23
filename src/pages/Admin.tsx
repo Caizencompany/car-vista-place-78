@@ -613,6 +613,31 @@ const Admin = () => {
   const availableCars = cars.filter(car => car.status === 'Disponível');
   const soldCars = cars.filter(car => car.status === 'Vendido');
 
+  // Add the missing image upload handler function
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const newFiles = Array.from(e.target.files);
+      setImageFiles(prev => [...prev, ...newFiles]);
+      
+      // Convert images to base64 for preview
+      newFiles.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (typeof reader.result === 'string') {
+            setImagePreviewUrls(prev => [...prev, reader.result as string]);
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+  
+  // Add the missing remove image handler function
+  const handleRemoveImage = (index: number) => {
+    setImageFiles(prev => prev.filter((_, i) => i !== index));
+    setImagePreviewUrls(prev => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
