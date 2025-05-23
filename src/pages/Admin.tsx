@@ -53,8 +53,32 @@ const financialData = {
   ]
 };
 
+// Define a proper Car type
+interface Car {
+  id: number;
+  name: string;
+  price: number;
+  year: number;
+  mileage: number;
+  fuel: string;
+  transmission: string;
+  brand: string;
+  category: string;
+  status: 'Disponível' | 'Vendido' | 'Consignado';
+  purchase_cost: number;
+  purchase_date: string;
+  sale_date: string | null;
+  description?: string;
+  additionalFeatures?: Array<{
+    id: number;
+    name: string;
+    price: number;
+    selected: boolean;
+  }>;
+}
+
 // Original mockCars from your Admin component
-const mockCars = [
+const mockCars: Car[] = [
   {
     id: 1,
     name: 'BMW X5 M50i',
@@ -87,10 +111,31 @@ const mockCars = [
   }
 ];
 
+interface FormData {
+  name: string;
+  price: string;
+  year: string;
+  mileage: string;
+  fuel: string;
+  transmission: string;
+  brand: string;
+  category: string;
+  description: string;
+  status: 'Disponível' | 'Vendido' | 'Consignado';
+  purchase_cost: string;
+  purchase_date: string;
+  additionalFeatures: Array<{
+    id: number;
+    name: string;
+    price: number;
+    selected: boolean;
+  }>;
+}
+
 const Admin = () => {
-  const [cars, setCars] = useState(mockCars);
+  const [cars, setCars] = useState<Car[]>(mockCars);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     price: '',
     year: '',
@@ -111,13 +156,14 @@ const Admin = () => {
   };
 
   const handleAddCar = () => {
-    const newCar = {
+    const newCar: Car = {
       id: Date.now(),
       ...formData,
-      price: parseInt(formData.price),
-      year: parseInt(formData.year),
-      mileage: parseInt(formData.mileage),
-      purchase_cost: parseInt(formData.purchase_cost)
+      price: parseInt(formData.price) || 0,
+      year: parseInt(formData.year) || 0,
+      mileage: parseInt(formData.mileage) || 0,
+      purchase_cost: parseInt(formData.purchase_cost) || 0,
+      sale_date: null // Add the missing sale_date property with null as default
     };
     
     setCars(prev => [...prev, newCar]);
@@ -678,7 +724,6 @@ const Admin = () => {
                             {transaction.type}
                           </span>
                         </TableCell>
-                        <TableCell>{transaction.customer}</TableCell>
                         <TableCell>{new Date(transaction.date).toLocaleDateString('pt-BR')}</TableCell>
                         <TableCell className={`text-right font-medium ${
                           transaction.amount > 0 ? 'text-green-600' : 'text-red-600'

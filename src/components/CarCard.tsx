@@ -16,7 +16,7 @@ interface Car {
   image: string;
   featured?: boolean;
   rating?: number;
-  status?: 'Disponível' | 'Vendido' | 'Consignado';
+  status?: 'Disponível' | 'Vendido' | 'Consignado'; // Updated to match the specific status types
 }
 
 interface CarCardProps {

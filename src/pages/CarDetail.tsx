@@ -18,8 +18,36 @@ import {
 } from 'lucide-react';
 import { WhatsappIcon } from '@/components/WhatsappIcon';
 
+// Define the proper type for AdditionalFeature
+interface AdditionalFeature {
+  id: number;
+  name: string;
+  price: number;
+  selected: boolean;
+}
+
+// Define the proper type for Car with specific status values
+interface Car {
+  id: number;
+  name: string;
+  price: number;
+  year: number;
+  mileage: number;
+  fuel: string;
+  transmission: string;
+  brand: string;
+  category: string;
+  status: 'Disponível' | 'Vendido' | 'Consignado';
+  purchase_cost: number;
+  purchase_date: string;
+  sale_date: string | null;
+  description: string;
+  additionalFeatures: AdditionalFeature[];
+  images: string[];
+}
+
 // Mock car data with additional features
-const mockCars = [
+const mockCars: Car[] = [
   {
     id: 1,
     name: 'BMW X5 M50i',
@@ -77,32 +105,6 @@ const mockCars = [
   },
 ];
 
-interface AdditionalFeature {
-  id: number;
-  name: string;
-  price: number;
-  selected: boolean;
-}
-
-interface Car {
-  id: number;
-  name: string;
-  price: number;
-  year: number;
-  mileage: number;
-  fuel: string;
-  transmission: string;
-  brand: string;
-  category: string;
-  status: 'Disponível' | 'Vendido' | 'Consignado';
-  purchase_cost: number;
-  purchase_date: string;
-  sale_date: string | null;
-  description: string;
-  additionalFeatures: AdditionalFeature[];
-  images: string[];
-}
-
 const CarDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [car, setCar] = useState<Car | null>(null);
@@ -141,7 +143,12 @@ const CarDetail = () => {
       return feature;
     });
     
-    const updatedCar = { ...car, additionalFeatures: updatedFeatures };
+    // Create a properly typed updated car object
+    const updatedCar: Car = {
+      ...car,
+      additionalFeatures: updatedFeatures
+    };
+    
     setCar(updatedCar);
     
     // Calculate total price including selected features
