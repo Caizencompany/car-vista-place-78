@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Filter, Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -21,7 +22,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'BMW',
-    category: 'SUV'
+    category: 'SUV',
+    status: 'Disponível',
+    purchase_cost: 420000,
+    purchase_date: '2023-01-15',
+    sale_date: null,
   },
   {
     id: 2,
@@ -33,7 +38,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'Mercedes',
-    category: 'Sedan'
+    category: 'Sedan',
+    status: 'Disponível',
+    purchase_cost: 360000,
+    purchase_date: '2023-02-10',
+    sale_date: null,
   },
   {
     id: 3,
@@ -45,7 +54,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'Audi',
-    category: 'Wagon'
+    category: 'Wagon',
+    status: 'Disponível',
+    purchase_cost: 590000,
+    purchase_date: '2024-01-05',
+    sale_date: null,
   },
   {
     id: 4,
@@ -57,7 +70,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'Porsche',
-    category: 'Esportivo'
+    category: 'Esportivo',
+    status: 'Disponível',
+    purchase_cost: 1050000,
+    purchase_date: '2024-02-20',
+    sale_date: null,
   },
   {
     id: 5,
@@ -69,7 +86,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'Tesla',
-    category: 'Sedan'
+    category: 'Sedan',
+    status: 'Disponível',
+    purchase_cost: 580000,
+    purchase_date: '2023-08-12',
+    sale_date: null,
   },
   {
     id: 6,
@@ -81,7 +102,11 @@ const mockCars: Omit<Car, 'ownership_type'>[] = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     brand: 'Land Rover',
-    category: 'SUV'
+    category: 'SUV',
+    status: 'Disponível',
+    purchase_cost: 280000,
+    purchase_date: '2022-11-05',
+    sale_date: null,
   }
 ];
 

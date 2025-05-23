@@ -18,7 +18,14 @@ const featuredCars = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     featured: true,
-    rating: 4.9
+    rating: 4.9,
+    brand: 'BMW',
+    category: 'SUV',
+    status: 'Disponível',
+    ownership_type: 'Próprio',
+    purchase_cost: 420000,
+    purchase_date: '2023-01-15',
+    sale_date: null
   },
   {
     id: 2,
@@ -30,7 +37,14 @@ const featuredCars = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     featured: true,
-    rating: 4.8
+    rating: 4.8,
+    brand: 'Mercedes',
+    category: 'Sedan',
+    status: 'Disponível',
+    ownership_type: 'Próprio',
+    purchase_cost: 360000,
+    purchase_date: '2023-02-10',
+    sale_date: null
   },
   {
     id: 3,
@@ -42,7 +56,14 @@ const featuredCars = [
     transmission: 'Automático',
     image: '/placeholder.svg',
     featured: true,
-    rating: 5.0
+    rating: 5.0,
+    brand: 'Audi',
+    category: 'Wagon',
+    status: 'Disponível',
+    ownership_type: 'Próprio',
+    purchase_cost: 590000,
+    purchase_date: '2024-01-05',
+    sale_date: null
   }
 ];
 
