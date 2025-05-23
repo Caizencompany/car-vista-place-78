@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Filter, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
@@ -22,7 +21,7 @@ const featuredCars = [
     brand: 'BMW',
     category: 'SUV',
     status: 'Disponível' as 'Disponível',
-    ownership_type: 'Próprio',
+    ownership_type: 'Próprio' as 'Próprio',
     purchase_cost: 420000,
     purchase_date: '2023-01-15',
     sale_date: null
@@ -41,7 +40,7 @@ const featuredCars = [
     brand: 'Mercedes',
     category: 'Sedan',
     status: 'Disponível' as 'Disponível',
-    ownership_type: 'Próprio',
+    ownership_type: 'Próprio' as 'Próprio',
     purchase_cost: 360000,
     purchase_date: '2023-02-10',
     sale_date: null
@@ -60,7 +59,7 @@ const featuredCars = [
     brand: 'Audi',
     category: 'Wagon',
     status: 'Disponível' as 'Disponível',
-    ownership_type: 'Próprio',
+    ownership_type: 'Próprio' as 'Próprio',
     purchase_cost: 590000,
     purchase_date: '2024-01-05',
     sale_date: null
