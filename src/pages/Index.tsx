@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -68,6 +69,14 @@ const featuredCars = [
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/catalog?search=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -86,7 +95,7 @@ const Index = () => {
             </p>
             
             {/* Search Bar */}
-            <div className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-8">
+            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4 max-w-2xl mx-auto mb-8">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
@@ -96,17 +105,22 @@ const Index = () => {
                   className="pl-12 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-gray-300"
                 />
               </div>
-              <Button size="lg" className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white">
+              <Button type="submit" size="lg" className="h-14 px-8 bg-blue-600 hover:bg-blue-700 text-white">
                 <Search className="mr-2 h-5 w-5" />
                 Buscar
               </Button>
-            </div>
+            </form>
 
             <div className="flex flex-wrap justify-center gap-4 text-sm">
-              <span className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">BMW</span>
-              <span className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">Mercedes</span>
-              <span className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">Audi</span>
-              <span className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full">Porsche</span>
+              {['BMW', 'Mercedes', 'Audi', 'Porsche'].map((brand) => (
+                <Link 
+                  key={brand} 
+                  to={`/catalog?search=${encodeURIComponent(brand)}`}
+                  className="bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full hover:bg-white/20 transition-colors"
+                >
+                  {brand}
+                </Link>
+              ))}
             </div>
           </div>
         </div>
