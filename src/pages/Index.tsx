@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
@@ -16,6 +15,7 @@ import {
 import CarCard from '@/components/CarCard';
 import Navbar from '@/components/Navbar';
 
+// Filter to only include available cars
 const featuredCars = [
   {
     id: 1,

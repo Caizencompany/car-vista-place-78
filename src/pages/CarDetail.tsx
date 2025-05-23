@@ -120,8 +120,8 @@ const CarDetail = () => {
     );
   }
   
-  // Don't show detail page for sold cars
-  if (car.status === 'Vendido') {
+  // Only show cars with status "Disponível"
+  if (car.status !== 'Disponível') {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navbar />

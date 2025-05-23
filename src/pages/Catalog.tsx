@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Filter, Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -148,9 +147,9 @@ const Catalog = () => {
   const fuels = [...new Set(availableCars.map(car => car.fuel))];
   const transmissions = [...new Set(availableCars.map(car => car.transmission))];
 
-  // Filter out sold cars when initializing the component and when cars change
+  // Filter only available cars when initializing the component and when cars change
   useEffect(() => {
-    const available = cars.filter(car => car.status !== 'Vendido');
+    const available = cars.filter(car => car.status === 'Disponível');
     setAvailableCars(available);
     setFilteredCars(available);
   }, [cars]);

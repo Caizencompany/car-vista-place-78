@@ -12,8 +12,8 @@ interface CarCardProps {
 }
 
 const CarCard = ({ car, isAdminView = false }: CarCardProps) => {
-  // Don't render sold cars in the public view unless in admin view
-  if (car.status === 'Vendido' && !isAdminView) {
+  // Only show available cars in the public view unless in admin view
+  if (car.status !== 'Disponível' && !isAdminView) {
     return null;
   }
 
