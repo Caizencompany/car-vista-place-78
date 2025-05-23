@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Filter, Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,9 +7,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { 
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command';
 import Navbar from '@/components/Navbar';
 import CarCard from '@/components/CarCard';
 import { Car } from '@/types/car';
+import { useNavigate } from 'react-router-dom';
 
 const mockCars: Omit<Car, 'ownership_type'>[] = [
   {
@@ -117,6 +127,7 @@ const carsWithOwnership = mockCars.map(car => ({
 }));
 
 const Catalog = () => {
+  const navigate = useNavigate();
   const [cars, setCars] = useState<Car[]>(carsWithOwnership);
   const [availableCars, setAvailableCars] = useState<Car[]>(cars);
   const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
@@ -130,6 +141,7 @@ const Catalog = () => {
   const [sortBy, setSortBy] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
 
   const brands = [...new Set(cars.map(car => car.brand))];
   const categories = [...new Set(cars.map(car => car.category))];
@@ -143,14 +155,18 @@ const Catalog = () => {
     setFilteredCars(available);
   }, [cars]);
 
-  useEffect(() => {
+  const applyFilters = useCallback(() => {
     let filtered = availableCars;
 
     // Search filter
     if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(car =>
-        car.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        car.brand.toLowerCase().includes(searchTerm.toLowerCase())
+        car.name.toLowerCase().includes(searchLower) ||
+        car.brand.toLowerCase().includes(searchLower) ||
+        car.category.toLowerCase().includes(searchLower) ||
+        car.fuel.toLowerCase().includes(searchLower) ||
+        String(car.year).includes(searchLower)
       );
     }
 
@@ -209,6 +225,10 @@ const Catalog = () => {
     setFilteredCars(filtered);
   }, [searchTerm, selectedBrand, selectedCategory, selectedFuel, selectedTransmission, priceRange, yearRange, sortBy, availableCars]);
 
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
+
   const clearFilters = () => {
     setSearchTerm('');
     setSelectedBrand('');
@@ -218,6 +238,15 @@ const Catalog = () => {
     setPriceRange([0, 1500000]);
     setYearRange([2020, 2024]);
     setSortBy('');
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleCarSelect = (carId: number) => {
+    setShowSearchDialog(false);
+    navigate(`/car/${carId}`);
   };
 
   return (
@@ -240,9 +269,63 @@ const Catalog = () => {
                 placeholder="Buscar por marca, modelo..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setShowSearchDialog(true)}
                 className="pl-12 h-12"
               />
             </div>
+            
+            {/* Command Dialog para pesquisa avançada */}
+            <CommandDialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+              <CommandInput 
+                placeholder="Buscar veículos..." 
+                value={searchTerm}
+                onValueChange={handleSearchChange}
+              />
+              <CommandList>
+                <CommandEmpty>Nenhum veículo encontrado.</CommandEmpty>
+                <CommandGroup heading="Veículos">
+                  {availableCars
+                    .filter(car => 
+                      car.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      String(car.year).includes(searchTerm)
+                    )
+                    .slice(0, 10)
+                    .map(car => (
+                      <CommandItem 
+                        key={car.id}
+                        onSelect={() => handleCarSelect(car.id)}
+                        className="flex justify-between"
+                      >
+                        <div className="flex items-center">
+                          <span className="mr-2">{car.brand}</span>
+                          <span className="font-medium">{car.name}</span>
+                        </div>
+                        <span className="text-gray-500">{car.year}</span>
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+                {searchTerm.length > 0 && (
+                  <CommandGroup heading="Marcas">
+                    {brands
+                      .filter(brand => 
+                        brand.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map(brand => (
+                        <CommandItem 
+                          key={brand}
+                          onSelect={() => {
+                            setSelectedBrand(brand);
+                            setShowSearchDialog(false);
+                          }}
+                        >
+                          <span>{brand}</span>
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </CommandDialog>
           </div>
           
           <div className="flex gap-2">
