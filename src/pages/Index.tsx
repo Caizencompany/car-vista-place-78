@@ -4,6 +4,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList
+} from '@/components/ui/command';
 import CarCard from '@/components/CarCard';
 import Navbar from '@/components/Navbar';
 
@@ -70,12 +79,36 @@ const featuredCars = [
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  
+  // Combine all car brands and models for search suggestions
+  const brands = ['BMW', 'Mercedes', 'Audi', 'Porsche', 'Tesla', 'Land Rover'];
+  const models = featuredCars.map(car => ({
+    id: car.id,
+    name: car.name,
+    brand: car.brand,
+    year: car.year
+  }));
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/catalog?search=${encodeURIComponent(searchTerm.trim())}`);
     }
+  };
+  
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleCarSelect = (carId: number) => {
+    setShowSearchDialog(false);
+    navigate(`/car/${carId}`);
+  };
+  
+  const handleBrandSelect = (brand: string) => {
+    setShowSearchDialog(false);
+    navigate(`/catalog?search=${encodeURIComponent(brand)}`);
   };
 
   return (
@@ -102,6 +135,7 @@ const Index = () => {
                   placeholder="Digite marca, modelo ou ano..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onFocus={() => setShowSearchDialog(true)}
                   className="pl-12 h-14 text-lg bg-white/10 backdrop-blur-sm border-white/20 text-white placeholder-gray-300"
                 />
               </div>
@@ -110,6 +144,55 @@ const Index = () => {
                 Buscar
               </Button>
             </form>
+
+            {/* Command Dialog para pesquisa avançada */}
+            <CommandDialog open={showSearchDialog} onOpenChange={setShowSearchDialog}>
+              <CommandInput 
+                placeholder="Buscar veículos..." 
+                value={searchTerm}
+                onValueChange={handleSearchChange}
+              />
+              <CommandList>
+                <CommandEmpty>Nenhum veículo encontrado.</CommandEmpty>
+                <CommandGroup heading="Veículos">
+                  {models
+                    .filter(car => 
+                      car.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      car.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      String(car.year).includes(searchTerm)
+                    )
+                    .map(car => (
+                      <CommandItem 
+                        key={car.id}
+                        onSelect={() => handleCarSelect(car.id)}
+                        className="flex justify-between"
+                      >
+                        <div className="flex items-center">
+                          <span className="mr-2">{car.brand}</span>
+                          <span className="font-medium">{car.name}</span>
+                        </div>
+                        <span className="text-gray-500">{car.year}</span>
+                      </CommandItem>
+                    ))}
+                </CommandGroup>
+                {searchTerm.length > 0 && (
+                  <CommandGroup heading="Marcas">
+                    {brands
+                      .filter(brand => 
+                        brand.toLowerCase().includes(searchTerm.toLowerCase())
+                      )
+                      .map(brand => (
+                        <CommandItem 
+                          key={brand}
+                          onSelect={() => handleBrandSelect(brand)}
+                        >
+                          <span>{brand}</span>
+                        </CommandItem>
+                      ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+            </CommandDialog>
 
             <div className="flex flex-wrap justify-center gap-4 text-sm">
               {['BMW', 'Mercedes', 'Audi', 'Porsche'].map((brand) => (
