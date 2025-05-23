@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Filter, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
+import { Search, Star, ArrowRight, Car, Users, Shield, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/command';
 import CarCard from '@/components/CarCard';
 import Navbar from '@/components/Navbar';
+import { useCars } from '@/contexts/CarContext';
 
 // Filter to only include available cars
 const featuredCars = [
@@ -81,9 +82,14 @@ const Index = () => {
   const navigate = useNavigate();
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   
-  // Combine all car brands and models for search suggestions
-  const brands = ['BMW', 'Mercedes', 'Audi', 'Porsche', 'Tesla', 'Land Rover'];
-  const models = featuredCars.map(car => ({
+  // Use the car context
+  const { getAvailableCars, getFeaturedCars } = useCars();
+  const availableCars = getAvailableCars();
+  const featuredCars = getFeaturedCars();
+  
+  // Combine all car brands for search suggestions
+  const brands = [...new Set(availableCars.map(car => car.brand))];
+  const models = availableCars.map(car => ({
     id: car.id,
     name: car.name,
     brand: car.brand,

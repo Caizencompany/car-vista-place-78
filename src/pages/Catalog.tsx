@@ -17,119 +17,15 @@ import {
 } from '@/components/ui/command';
 import Navbar from '@/components/Navbar';
 import CarCard from '@/components/CarCard';
-import { Car } from '@/types/car';
 import { useNavigate } from 'react-router-dom';
-
-const mockCars: Omit<Car, 'ownership_type'>[] = [
-  {
-    id: 1,
-    name: 'BMW X5 M50i',
-    price: 485000,
-    year: 2023,
-    mileage: 12000,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'BMW',
-    category: 'SUV',
-    status: 'Disponível',
-    purchase_cost: 420000,
-    purchase_date: '2023-01-15',
-    sale_date: null,
-  },
-  {
-    id: 2,
-    name: 'Mercedes-AMG C43',
-    price: 420000,
-    year: 2023,
-    mileage: 8500,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'Mercedes',
-    category: 'Sedan',
-    status: 'Disponível',
-    purchase_cost: 360000,
-    purchase_date: '2023-02-10',
-    sale_date: null,
-  },
-  {
-    id: 3,
-    name: 'Audi RS6 Avant',
-    price: 680000,
-    year: 2024,
-    mileage: 2100,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'Audi',
-    category: 'Wagon',
-    status: 'Disponível',
-    purchase_cost: 590000,
-    purchase_date: '2024-01-05',
-    sale_date: null,
-  },
-  {
-    id: 4,
-    name: 'Porsche 911 Turbo S',
-    price: 1200000,
-    year: 2024,
-    mileage: 500,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'Porsche',
-    category: 'Esportivo',
-    status: 'Disponível',
-    purchase_cost: 1050000,
-    purchase_date: '2024-02-20',
-    sale_date: null,
-  },
-  {
-    id: 5,
-    name: 'Tesla Model S',
-    price: 650000,
-    year: 2023,
-    mileage: 15000,
-    fuel: 'Elétrico',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'Tesla',
-    category: 'Sedan',
-    status: 'Disponível',
-    purchase_cost: 580000,
-    purchase_date: '2023-08-12',
-    sale_date: null,
-  },
-  {
-    id: 6,
-    name: 'Range Rover Evoque',
-    price: 320000,
-    year: 2022,
-    mileage: 25000,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    image: '/placeholder.svg',
-    brand: 'Land Rover',
-    category: 'SUV',
-    status: 'Disponível',
-    purchase_cost: 280000,
-    purchase_date: '2022-11-05',
-    sale_date: null,
-  }
-];
-
-// Add ownership_type to all cars
-const carsWithOwnership = mockCars.map(car => ({
-  ...car,
-  ownership_type: 'Próprio' as const
-}));
+import { useCars } from '@/contexts/CarContext';
 
 const Catalog = () => {
   const navigate = useNavigate();
-  const [cars, setCars] = useState<Car[]>(carsWithOwnership);
-  const [availableCars, setAvailableCars] = useState<Car[]>(cars);
-  const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
+  const { getAvailableCars } = useCars();
+  
+  const [availableCars, setAvailableCars] = useState(getAvailableCars());
+  const [filteredCars, setFilteredCars] = useState(availableCars);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -142,17 +38,16 @@ const Catalog = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
 
+  // Get latest available cars when component mounts or when cars change
+  useEffect(() => {
+    setAvailableCars(getAvailableCars());
+  }, [getAvailableCars]);
+
+  // Compute unique values for filters
   const brands = [...new Set(availableCars.map(car => car.brand))];
   const categories = [...new Set(availableCars.map(car => car.category))];
   const fuels = [...new Set(availableCars.map(car => car.fuel))];
   const transmissions = [...new Set(availableCars.map(car => car.transmission))];
-
-  // Filter only available cars when initializing the component and when cars change
-  useEffect(() => {
-    const available = cars.filter(car => car.status === 'Disponível');
-    setAvailableCars(available);
-    setFilteredCars(available);
-  }, [cars]);
 
   const applyFilters = useCallback(() => {
     let filtered = availableCars;
@@ -511,7 +406,7 @@ const Catalog = () => {
                           <div>Câmbio: {car.transmission}</div>
                         </div>
                         <div className="flex space-x-3">
-                          <Button variant="outline">Ver Detalhes</Button>
+                          <Button variant="outline" onClick={() => navigate(`/car/${car.id}`)}>Ver Detalhes</Button>
                           <Button className="bg-blue-600 hover:bg-blue-700">Contatar</Button>
                         </div>
                       </div>

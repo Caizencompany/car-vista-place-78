@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -26,91 +25,54 @@ import {
   Share2,
 } from 'lucide-react';
 import { WhatsappIcon } from '@/components/WhatsappIcon';
-import { Car, AdditionalFeature } from '@/types/car';
-
-// Mock car data with additional features
-const mockCars: Car[] = [
-  {
-    id: 1,
-    name: 'BMW X5 M50i',
-    price: 485000,
-    year: 2023,
-    mileage: 12000,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    brand: 'BMW',
-    category: 'SUV',
-    status: 'Disponível',
-    ownership_type: 'Próprio',
-    purchase_cost: 400000,
-    purchase_date: '2023-01-15',
-    sale_date: null,
-    description: 'O BMW X5 M50i combina o design de um SUV de luxo com o desempenho de um carro esportivo. Com um motor V8 biturbo de 4.4 litros gerando 530 cavalos de potência, o X5 M50i oferece aceleração impressionante e uma experiência de condução dinâmica. O interior espaçoso e repleto de tecnologia proporciona conforto excepcional para todos os ocupantes.',
-    additionalFeatures: [
-      { id: 1, name: 'Teto Solar Panorâmico', price: 8000, selected: false },
-      { id: 2, name: 'Sistema de Som Harman Kardon', price: 5500, selected: false },
-      { id: 3, name: 'Pacote de Assistência ao Motorista', price: 7000, selected: false },
-      { id: 4, name: 'Rodas de Liga Leve 22"', price: 6000, selected: false },
-      { id: 5, name: 'Pacote Interior de Couro Nappa', price: 9000, selected: false }
-    ],
-    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
-  },
-  {
-    id: 2,
-    name: 'Mercedes-AMG C43',
-    price: 420000,
-    year: 2023,
-    mileage: 8500,
-    fuel: 'Gasolina',
-    transmission: 'Automático',
-    brand: 'Mercedes',
-    category: 'Sedan',
-    status: 'Vendido',
-    ownership_type: 'Consignado',
-    purchase_cost: 350000,
-    purchase_date: '2023-01-10',
-    sale_date: '2023-05-20',
-    description: 'O Mercedes-AMG C43 oferece um equilíbrio perfeito entre luxo e desempenho. Com um motor de 4 cilindros turbo de 2.0 litros capaz de gerar 402 cavalos de potência, o C43 proporciona aceleração impressionante e agilidade nas curvas. O interior sofisticado e tecnológico, combinado com o design esportivo AMG, cria uma experiência de direção verdadeiramente premium.',
-    additionalFeatures: [
-      { id: 1, name: 'Pacote AMG Night', price: 5000, selected: false },
-      { id: 2, name: 'Sistema de Som Burmester', price: 6500, selected: false },
-      { id: 3, name: 'Head-up Display', price: 4800, selected: false },
-      { id: 4, name: 'Teto Solar Panorâmico', price: 7000, selected: false }
-    ],
-    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
-  }
-];
+import { AdditionalFeature } from '@/types/car';
+import { useCars } from '@/contexts/CarContext';
 
 const CarDetail = () => {
   const { id } = useParams<{ id: string }>();
-  const [car, setCar] = useState<Car | null>(null);
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [totalPrice, setTotalPrice] = useState(0);
+  const { getCarById } = useCars();
+  const [car, setCar] = useState(id ? getCarById(parseInt(id)) : undefined);
+  const [activeImageIndex, setActiveImageIndex] = useState(car?.images ? 0 : 0);
+  const [totalPrice, setTotalPrice] = useState(car?.price || 0);
   const [selectedFeatures, setSelectedFeatures] = useState<AdditionalFeature[]>([]);
   const [carImages, setCarImages] = useState<string[]>([]);
 
   useEffect(() => {
-    const foundCar = mockCars.find(c => c.id === Number(id));
-    
-    if (foundCar) {
-      setCar(foundCar);
-      setTotalPrice(foundCar.price);
+    if (id) {
+      const foundCar = getCarById(parseInt(id));
       
-      // Configurar imagens do carro (pode ser um array ou uma única imagem)
-      if (foundCar.images && foundCar.images.length > 0) {
-        setCarImages(foundCar.images);
-      } else if (foundCar.image) {
-        setCarImages([foundCar.image]);
-      } else {
-        setCarImages(['/placeholder.svg']);
-      }
-      
-      if (foundCar.additionalFeatures) {
-        const initialSelected = foundCar.additionalFeatures.filter(feature => feature.selected);
-        setSelectedFeatures(initialSelected);
+      if (foundCar) {
+        setCar(foundCar);
+        setTotalPrice(foundCar.price);
+        
+        // Configure car images (can be an array or a single image)
+        if (foundCar.images && foundCar.images.length > 0) {
+          setCarImages(foundCar.images);
+        } else if (foundCar.image) {
+          setCarImages([foundCar.image]);
+        } else {
+          setCarImages(['/placeholder.svg']);
+        }
+        
+        if (foundCar.additionalFeatures) {
+          const initialSelected = foundCar.additionalFeatures.filter(feature => feature.selected);
+          setSelectedFeatures(initialSelected);
+        }
       }
     }
-  }, [id]);
+  }, [id, getCarById]);
+
+  useEffect(() => {
+    if (car) {
+      setTotalPrice(car.price);
+      if (car.additionalFeatures) {
+        const selected = car.additionalFeatures.filter(f => f.selected);
+        setSelectedFeatures(selected);
+        const featuresTotal = selected.reduce((sum, feature) => sum + feature.price, 0);
+        setTotalPrice(car.price + featuresTotal);
+      }
+    }
+  }, [car]);
 
   if (!car) {
     return (
@@ -148,13 +110,10 @@ const CarDetail = () => {
       return feature;
     });
     
-    // Create a properly typed updated car object
-    const updatedCar: Car = {
+    setCar({
       ...car,
       additionalFeatures: updatedFeatures
-    };
-    
-    setCar(updatedCar);
+    });
     
     // Calculate total price including selected features
     const selectedFeatures = updatedFeatures.filter(feature => feature.selected);
