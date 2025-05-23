@@ -43,6 +43,7 @@ export interface Car {
   sale_date: string | null;
   image?: string;
   images?: string[]; // Array de imagens do carro
+  videoUrl?: string; // URL do vídeo do carro
   description?: string; // Descrição do veículo
   additionalFeatures?: AdditionalFeature[];
   buyerInfo?: BuyerInfo;

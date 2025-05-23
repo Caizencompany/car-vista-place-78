@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { 
   Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, 
-  DollarSign, ShoppingCart, Archive, Tag, Check, X
+  DollarSign, ShoppingCart, Archive, Tag, Check, X,
+  Upload, Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -189,6 +190,8 @@ interface FormData {
   purchase_cost: string;
   purchase_date: string;
   additionalFeatures: AdditionalFeature[];
+  videoUrl: string;
+  images: string[];
   ownerInfo?: {
     name: string;
     document: string;
@@ -242,7 +245,9 @@ const Admin = () => {
     ownership_type: 'Próprio',
     purchase_cost: '',
     purchase_date: '',
-    additionalFeatures: []
+    additionalFeatures: [],
+    videoUrl: '',
+    images: []
   });
   const [saleFormData, setSaleFormData] = useState<SaleFormData>({
     buyerName: '',
@@ -260,6 +265,10 @@ const Admin = () => {
     carId: null,
     purchaseCost: ''
   });
+  
+  // Novo state para o gerenciamento de upload de imagens
+  const [imageFiles, setImageFiles] = useState<File[]>([]);
+  const [imagePreviewUrls, setImagePreviewUrls] = useState<string[]>([]);
   
   const { toast } = useToast();
 
@@ -360,7 +369,9 @@ const Admin = () => {
       mileage: parseInt(formData.mileage) || 0,
       purchase_cost: parseInt(formData.purchase_cost) || 0,
       sale_date: null,
-      additionalFeatures: selectedCarFeatures
+      additionalFeatures: selectedCarFeatures,
+      images: imagePreviewUrls,
+      videoUrl: formData.videoUrl
     };
     
     setCars(prev => [...prev, newCar]);
@@ -378,9 +389,13 @@ const Admin = () => {
       ownership_type: 'Próprio',
       purchase_cost: '',
       purchase_date: '',
-      additionalFeatures: []
+      additionalFeatures: [],
+      videoUrl: '',
+      images: []
     });
     setSelectedFeatures([]);
+    setImageFiles([]);
+    setImagePreviewUrls([]);
     setIsAddDialogOpen(false);
     
     toast({
@@ -681,7 +696,7 @@ const Admin = () => {
                     Adicionar Carro
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl">
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Adicionar Novo Carro</DialogTitle>
                   </DialogHeader>
@@ -905,9 +920,83 @@ const Admin = () => {
                         ))}
                       </div>
                     </div>
+                    
+                    {/* Campo para URL do vídeo */}
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="videoUrl" className="flex items-center gap-2">
+                        <Video className="h-4 w-4" />
+                        URL do Vídeo
+                      </Label>
+                      <Input
+                        id="videoUrl"
+                        type="url"
+                        value={formData.videoUrl}
+                        onChange={(e) => handleInputChange('videoUrl', e.target.value)}
+                        placeholder="https://youtube.com/watch?v=..."
+                      />
+                      <p className="text-xs text-gray-500">
+                        Insira o link do YouTube, Vimeo ou outro serviço de vídeo.
+                      </p>
+                    </div>
+                    
+                    {/* Upload de imagens */}
+                    <div className="col-span-2 space-y-2">
+                      <Label htmlFor="images" className="flex items-center gap-2">
+                        <Upload className="h-4 w-4" />
+                        Imagens do Veículo
+                      </Label>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                        <Input
+                          id="images"
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        <label 
+                          htmlFor="images" 
+                          className="flex flex-col items-center justify-center py-6 cursor-pointer"
+                        >
+                          <Upload className="h-10 w-10 text-gray-400 mb-2" />
+                          <p className="text-sm font-medium text-gray-600">Clique para selecionar imagens</p>
+                          <p className="text-xs text-gray-400 mt-1">ou arraste e solte</p>
+                        </label>
+                      </div>
+                      
+                      {/* Visualização de imagens carregadas */}
+                      {imagePreviewUrls.length > 0 && (
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-2">Imagens selecionadas:</p>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+                            {imagePreviewUrls.map((url, index) => (
+                              <div key={index} className="relative group">
+                                <img
+                                  src={url}
+                                  alt={`Imagem ${index + 1}`}
+                                  className="w-full h-20 object-cover rounded-md"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveImage(index)}
+                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 
+                                             opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-end space-x-2">
-                    <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+                    <Button variant="outline" onClick={() => {
+                      setIsAddDialogOpen(false);
+                      setImageFiles([]);
+                      setImagePreviewUrls([]);
+                    }}>
                       Cancelar
                     </Button>
                     <Button onClick={handleAddCar} className="bg-blue-600 hover:bg-blue-700">
