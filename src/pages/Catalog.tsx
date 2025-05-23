@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Filter, Search, SlidersHorizontal, Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,8 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import CarCard from '@/components/CarCard';
+import { Car } from '@/types/car';
 
-const mockCars = [
+const mockCars: Omit<Car, 'ownership_type'>[] = [
   {
     id: 1,
     name: 'BMW X5 M50i',
@@ -85,9 +85,16 @@ const mockCars = [
   }
 ];
 
+// Add ownership_type to all cars
+const carsWithOwnership = mockCars.map(car => ({
+  ...car,
+  ownership_type: 'Próprio' as const
+}));
+
 const Catalog = () => {
-  const [cars, setCars] = useState(mockCars);
-  const [filteredCars, setFilteredCars] = useState(mockCars);
+  const [cars, setCars] = useState<Car[]>(carsWithOwnership);
+  const [availableCars, setAvailableCars] = useState<Car[]>(cars);
+  const [filteredCars, setFilteredCars] = useState<Car[]>(cars);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -104,8 +111,15 @@ const Catalog = () => {
   const fuels = [...new Set(cars.map(car => car.fuel))];
   const transmissions = [...new Set(cars.map(car => car.transmission))];
 
+  // Filter out sold cars when initializing the component and when cars change
   useEffect(() => {
-    let filtered = cars;
+    const available = cars.filter(car => car.status !== 'Vendido');
+    setAvailableCars(available);
+    setFilteredCars(available);
+  }, [cars]);
+
+  useEffect(() => {
+    let filtered = availableCars;
 
     // Search filter
     if (searchTerm) {
@@ -168,7 +182,7 @@ const Catalog = () => {
     }
 
     setFilteredCars(filtered);
-  }, [searchTerm, selectedBrand, selectedCategory, selectedFuel, selectedTransmission, priceRange, yearRange, sortBy, cars]);
+  }, [searchTerm, selectedBrand, selectedCategory, selectedFuel, selectedTransmission, priceRange, yearRange, sortBy, availableCars]);
 
   const clearFilters = () => {
     setSearchTerm('');

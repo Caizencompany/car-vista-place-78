@@ -1,23 +1,9 @@
-
 import { Heart, Star, Fuel, Calendar, Gauge } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import { WhatsappIcon } from './WhatsappIcon';
-
-interface Car {
-  id: number;
-  name: string;
-  price: number;
-  year: number;
-  mileage: number;
-  fuel: string;
-  transmission: string;
-  image: string;
-  featured?: boolean;
-  rating?: number;
-  status?: 'Disponível' | 'Vendido' | 'Consignado'; // Updated to match the specific status types
-}
+import { Car } from '@/types/car';
 
 interface CarCardProps {
   car: Car;

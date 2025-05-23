@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, DollarSign, ShoppingCart, Archive } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, Edit, Trash2, Eye, Car, Users, BarChart3, Settings, DollarSign, ShoppingCart, Archive, Tag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Navbar from '@/components/Navbar';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { Car, AdditionalFeature } from '@/types/car';
 
 // Mock data for financial dashboard
 const financialData = {
@@ -53,31 +54,7 @@ const financialData = {
   ]
 };
 
-// Define a proper Car type
-interface Car {
-  id: number;
-  name: string;
-  price: number;
-  year: number;
-  mileage: number;
-  fuel: string;
-  transmission: string;
-  brand: string;
-  category: string;
-  status: 'Disponível' | 'Vendido' | 'Consignado';
-  purchase_cost: number;
-  purchase_date: string;
-  sale_date: string | null;
-  description?: string;
-  additionalFeatures?: Array<{
-    id: number;
-    name: string;
-    price: number;
-    selected: boolean;
-  }>;
-}
-
-// Original mockCars from your Admin component
+// Updated mockCars with ownership_type
 const mockCars: Car[] = [
   {
     id: 1,
@@ -90,6 +67,7 @@ const mockCars: Car[] = [
     brand: 'BMW',
     category: 'SUV',
     status: 'Disponível',
+    ownership_type: 'Próprio',
     purchase_cost: 400000,
     purchase_date: '2023-01-15',
     sale_date: null,
@@ -105,11 +83,21 @@ const mockCars: Car[] = [
     brand: 'Mercedes',
     category: 'Sedan',
     status: 'Vendido',
+    ownership_type: 'Consignado',
     purchase_cost: 350000,
     purchase_date: '2023-01-10',
     sale_date: '2023-05-20',
   }
 ];
+
+// Mock data for additional features
+const mockAdditionalFeatures: AdditionalFeature[] = [
+  { id: 1, name: 'Teto Solar', price: 8000, selected: false },
+  { id: 2, name: 'Bancos de Couro', price: 5000, selected: false },
+  { id: 3, name: 'Sistema de Som Premium', price: 7500, selected: false },
+  { id: 4, name: 'Rodas de Liga Leve 20"', price: 6000, selected: false },
+  { id: 5, name: 'Assistente de Estacionamento', price: 4500, selected: false }
+};
 
 interface FormData {
   name: string;
@@ -122,19 +110,26 @@ interface FormData {
   category: string;
   description: string;
   status: 'Disponível' | 'Vendido' | 'Consignado';
+  ownership_type: 'Próprio' | 'Consignado';
   purchase_cost: string;
   purchase_date: string;
-  additionalFeatures: Array<{
-    id: number;
-    name: string;
-    price: number;
-    selected: boolean;
-  }>;
+  additionalFeatures: AdditionalFeature[];
+}
+
+interface FeatureFormData {
+  name: string;
+  price: string;
 }
 
 const Admin = () => {
   const [cars, setCars] = useState<Car[]>(mockCars);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [additionalFeatures, setAdditionalFeatures] = useState<AdditionalFeature[]>(mockAdditionalFeatures);
+  const [isAddFeatureDialogOpen, setIsAddFeatureDialogOpen] = useState(false);
+  const [featureFormData, setFeatureFormData] = useState<FeatureFormData>({
+    name: '',
+    price: ''
+  });
   const [formData, setFormData] = useState<FormData>({
     name: '',
     price: '',
@@ -146,6 +141,7 @@ const Admin = () => {
     category: '',
     description: '',
     status: 'Disponível',
+    ownership_type: 'Próprio',
     purchase_cost: '',
     purchase_date: '',
     additionalFeatures: []
@@ -153,6 +149,10 @@ const Admin = () => {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFeatureInputChange = (field: string, value: string) => {
+    setFeatureFormData(prev => ({ ...prev, [field]: value }));
   };
 
   const handleAddCar = () => {
@@ -163,7 +163,7 @@ const Admin = () => {
       year: parseInt(formData.year) || 0,
       mileage: parseInt(formData.mileage) || 0,
       purchase_cost: parseInt(formData.purchase_cost) || 0,
-      sale_date: null // Add the missing sale_date property with null as default
+      sale_date: null
     };
     
     setCars(prev => [...prev, newCar]);
@@ -178,6 +178,7 @@ const Admin = () => {
       category: '',
       description: '',
       status: 'Disponível',
+      ownership_type: 'Próprio',
       purchase_cost: '',
       purchase_date: '',
       additionalFeatures: []
@@ -185,16 +186,40 @@ const Admin = () => {
     setIsAddDialogOpen(false);
   };
 
+  const handleAddFeature = () => {
+    const newFeature: AdditionalFeature = {
+      id: Date.now(),
+      name: featureFormData.name,
+      price: parseInt(featureFormData.price) || 0,
+      selected: false
+    };
+    
+    setAdditionalFeatures(prev => [...prev, newFeature]);
+    setFeatureFormData({
+      name: '',
+      price: ''
+    });
+    setIsAddFeatureDialogOpen(false);
+  };
+
   const handleDeleteCar = (id: number) => {
     setCars(prev => prev.filter(car => car.id !== id));
+  };
+
+  const handleDeleteFeature = (id: number) => {
+    setAdditionalFeatures(prev => prev.filter(feature => feature.id !== id));
   };
 
   // Calculate statistics based on cars data
   const calculateStats = () => {
     const availableCars = cars.filter(car => car.status === 'Disponível').length;
     const soldCars = cars.filter(car => car.status === 'Vendido').length;
-    const consignedCars = cars.filter(car => car.status === 'Consignado').length;
+    const consignedCars = cars.filter(car => car.ownership_type === 'Consignado').length;
+    const ownCars = cars.filter(car => car.ownership_type === 'Próprio').length;
     const totalValue = cars.reduce((sum, car) => sum + car.price, 0);
+    const consignmentValue = cars
+      .filter(car => car.ownership_type === 'Consignado')
+      .reduce((sum, car) => sum + car.price, 0);
 
     return [
       {
@@ -212,14 +237,32 @@ const Admin = () => {
       {
         title: 'Carros Vendidos',
         value: soldCars,
-        icon: BarChart3,
+        icon: ShoppingCart,
         color: 'bg-purple-500'
       },
       {
         title: 'Valor Total',
         value: `R$ ${totalValue.toLocaleString()}`,
-        icon: BarChart3,
+        icon: DollarSign,
         color: 'bg-orange-500'
+      },
+      {
+        title: 'Carros Próprios',
+        value: ownCars,
+        icon: Car,
+        color: 'bg-indigo-500'
+      },
+      {
+        title: 'Carros Consignados',
+        value: consignedCars,
+        icon: Archive,
+        color: 'bg-amber-500'
+      },
+      {
+        title: 'Valor Consignado',
+        value: `R$ ${consignmentValue.toLocaleString()}`,
+        icon: DollarSign,
+        color: 'bg-emerald-500'
       }
     ];
   };
@@ -234,6 +277,30 @@ const Admin = () => {
     }).format(value);
   };
 
+  // Calculate financial data by ownership
+  const financialByOwnership = {
+    ownCarsRevenue: cars
+      .filter(car => car.ownership_type === 'Próprio' && car.status === 'Vendido')
+      .reduce((sum, car) => sum + car.price, 0),
+    consignmentRevenue: cars
+      .filter(car => car.ownership_type === 'Consignado' && car.status === 'Vendido')
+      .reduce((sum, car) => sum + car.price * 0.05, 0), // Assuming 5% commission
+  };
+
+  // Prepare data for ownership type visualization
+  const ownershipData = [
+    { 
+      name: 'Próprio', 
+      value: cars.filter(car => car.ownership_type === 'Próprio').length,
+      color: '#60a5fa' 
+    },
+    { 
+      name: 'Consignado', 
+      value: cars.filter(car => car.ownership_type === 'Consignado').length,
+      color: '#a78bfa' 
+    }
+  ];
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -245,17 +312,19 @@ const Admin = () => {
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="cars">Gerenciar Carros</TabsTrigger>
+            <TabsTrigger value="features">Opcionais</TabsTrigger>
             <TabsTrigger value="financial">Financeiro</TabsTrigger>
             <TabsTrigger value="settings">Configurações</TabsTrigger>
           </TabsList>
 
+          {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {stats.map((stat, index) => (
+              {stats.slice(0, 4).map((stat, index) => (
                 <Card key={index}>
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
@@ -302,8 +371,8 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
+          {/* Cars Tab */}
           <TabsContent value="cars" className="space-y-6">
-            
             <div className="flex justify-between items-center">
               <h2 className="text-2xl font-bold text-gray-900">Gerenciar Carros</h2>
               
@@ -340,6 +409,23 @@ const Admin = () => {
                           <SelectItem value="Audi">Audi</SelectItem>
                           <SelectItem value="Porsche">Porsche</SelectItem>
                           <SelectItem value="Tesla">Tesla</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    {/* Added ownership_type field */}
+                    <div className="space-y-2">
+                      <Label htmlFor="ownership_type">Tipo de Propriedade</Label>
+                      <Select 
+                        value={formData.ownership_type} 
+                        onValueChange={(value: 'Próprio' | 'Consignado') => handleInputChange('ownership_type', value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Próprio">Próprio</SelectItem>
+                          <SelectItem value="Consignado">Consignado</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -424,7 +510,10 @@ const Admin = () => {
                     
                     <div className="space-y-2">
                       <Label htmlFor="status">Status</Label>
-                      <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+                      <Select 
+                        value={formData.status} 
+                        onValueChange={(value: 'Disponível' | 'Vendido' | 'Consignado') => handleInputChange('status', value)}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
@@ -435,6 +524,7 @@ const Admin = () => {
                         </SelectContent>
                       </Select>
                     </div>
+                    
                     <div className="space-y-2">
                       <Label htmlFor="purchase_cost">Custo de Aquisição (R$)</Label>
                       <Input
@@ -489,6 +579,7 @@ const Admin = () => {
                       <TableHead>Preço</TableHead>
                       <TableHead>Ano</TableHead>
                       <TableHead>Status</TableHead>
+                      <TableHead>Propriedade</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -508,6 +599,15 @@ const Admin = () => {
                                 : 'bg-blue-100 text-blue-800'
                           }`}>
                             {car.status}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            car.ownership_type === 'Próprio' 
+                              ? 'bg-indigo-100 text-indigo-800' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {car.ownership_type}
                           </span>
                         </TableCell>
                         <TableCell className="text-right">
@@ -533,14 +633,101 @@ const Admin = () => {
             </Card>
           </TabsContent>
 
-          {/* New Financial Dashboard Tab */}
+          {/* New Additional Features Tab */}
+          <TabsContent value="features" className="space-y-6">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-900">Gerenciar Opcionais</h2>
+              
+              <Dialog open={isAddFeatureDialogOpen} onOpenChange={setIsAddFeatureDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-blue-600 hover:bg-blue-700">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Opcional
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Adicionar Novo Opcional</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="feature-name">Nome do Opcional</Label>
+                      <Input
+                        id="feature-name"
+                        value={featureFormData.name}
+                        onChange={(e) => handleFeatureInputChange('name', e.target.value)}
+                        placeholder="Ex: Teto Solar"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="feature-price">Preço (R$)</Label>
+                      <Input
+                        id="feature-price"
+                        type="number"
+                        value={featureFormData.price}
+                        onChange={(e) => handleFeatureInputChange('price', e.target.value)}
+                        placeholder="5000"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button variant="outline" onClick={() => setIsAddFeatureDialogOpen(false)}>
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleAddFeature} className="bg-blue-600 hover:bg-blue-700">
+                      Adicionar Opcional
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            <Card>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Preço</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {additionalFeatures.map((feature) => (
+                      <TableRow key={feature.id}>
+                        <TableCell className="font-medium">{feature.name}</TableCell>
+                        <TableCell>{formatCurrency(feature.price)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end space-x-2">
+                            <Button variant="outline" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleDeleteFeature(feature.id)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Updated Financial Dashboard Tab with ownership data */}
           <TabsContent value="financial" className="space-y-6">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">Dashboard Financeiro</h2>
               <p className="text-gray-500">Acompanhe o desempenho financeiro de sua concessionária</p>
             </div>
 
-            {/* Financial Summary Cards */}
+            {/* Financial Summary Cards with ownership type data */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               <Card>
                 <CardContent className="p-6">
@@ -599,7 +786,7 @@ const Admin = () => {
               </Card>
             </div>
 
-            {/* Charts Section */}
+            {/* Charts Section with ownership visualization */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
@@ -623,13 +810,13 @@ const Admin = () => {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Distribuição de Carros</CardTitle>
+                  <CardTitle>Distribuição por Propriedade</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                       <Pie
-                        data={financialData.carStatus}
+                        data={ownershipData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -639,7 +826,7 @@ const Admin = () => {
                         nameKey="name"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {financialData.carStatus.map((entry, index) => (
+                        {ownershipData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
@@ -650,42 +837,31 @@ const Admin = () => {
               </Card>
             </div>
 
-            {/* Revenue Breakdown */}
+            {/* Revenue Breakdown with ownership type data */}
             <Card>
               <CardHeader>
-                <CardTitle>Detalhamento de Receita</CardTitle>
+                <CardTitle>Detalhamento de Receita por Tipo de Propriedade</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Vendas Diretas</p>
-                    <p className="text-2xl font-bold">{formatCurrency(financialData.revenue.salesTotal)}</p>
+                    <p className="text-sm text-gray-500">Veículos Próprios</p>
+                    <p className="text-2xl font-bold">{formatCurrency(financialByOwnership.ownCarsRevenue)}</p>
                     <div className="h-2 bg-gray-200 rounded-full">
                       <div 
-                        className="h-2 bg-blue-500 rounded-full" 
-                        style={{ width: `${(financialData.revenue.salesTotal / financialData.revenue.total * 100)}%` }}
+                        className="h-2 bg-indigo-500 rounded-full" 
+                        style={{ width: `${(financialByOwnership.ownCarsRevenue / (financialByOwnership.ownCarsRevenue + financialByOwnership.consignmentRevenue) * 100) || 0}%` }}
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
                     <p className="text-sm text-gray-500">Comissões Consignados</p>
-                    <p className="text-2xl font-bold">{formatCurrency(financialData.revenue.consignmentCommissions)}</p>
+                    <p className="text-2xl font-bold">{formatCurrency(financialByOwnership.consignmentRevenue)}</p>
                     <div className="h-2 bg-gray-200 rounded-full">
                       <div 
-                        className="h-2 bg-purple-500 rounded-full" 
-                        style={{ width: `${(financialData.revenue.consignmentCommissions / financialData.revenue.total * 100)}%` }}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">Serviços Adicionais</p>
-                    <p className="text-2xl font-bold">{formatCurrency(financialData.revenue.additionalServices)}</p>
-                    <div className="h-2 bg-gray-200 rounded-full">
-                      <div 
-                        className="h-2 bg-green-500 rounded-full" 
-                        style={{ width: `${(financialData.revenue.additionalServices / financialData.revenue.total * 100)}%` }}
+                        className="h-2 bg-amber-500 rounded-full" 
+                        style={{ width: `${(financialByOwnership.consignmentRevenue / (financialByOwnership.ownCarsRevenue + financialByOwnership.consignmentRevenue) * 100) || 0}%` }}
                       />
                     </div>
                   </div>
@@ -739,7 +915,6 @@ const Admin = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            
             <Card>
               <CardHeader>
                 <CardTitle>Configurações Gerais</CardTitle>

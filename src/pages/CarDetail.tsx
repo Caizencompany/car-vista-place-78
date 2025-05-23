@@ -1,50 +1,31 @@
-
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
-import { 
-  ChevronLeft, 
-  Heart, 
-  Share2, 
-  Calendar, 
-  Gauge, 
-  Fuel, 
-  Settings, 
-  Check, 
-  Car as CarIcon
+import {
+  ArrowLeft,
+  CheckCircle,
+  ChevronRight,
+  Fuel,
+  Calendar,
+  Gauge,
+  Cog,
+  Car as CarIcon,
+  Heart,
+  Share2,
 } from 'lucide-react';
 import { WhatsappIcon } from '@/components/WhatsappIcon';
-
-// Define the proper type for AdditionalFeature
-interface AdditionalFeature {
-  id: number;
-  name: string;
-  price: number;
-  selected: boolean;
-}
-
-// Define the proper type for Car with specific status values
-interface Car {
-  id: number;
-  name: string;
-  price: number;
-  year: number;
-  mileage: number;
-  fuel: string;
-  transmission: string;
-  brand: string;
-  category: string;
-  status: 'Disponível' | 'Vendido' | 'Consignado';
-  purchase_cost: number;
-  purchase_date: string;
-  sale_date: string | null;
-  description: string;
-  additionalFeatures: AdditionalFeature[];
-  images: string[];
-}
+import { Car, AdditionalFeature } from '@/types/car';
 
 // Mock car data with additional features
 const mockCars: Car[] = [
@@ -59,22 +40,19 @@ const mockCars: Car[] = [
     brand: 'BMW',
     category: 'SUV',
     status: 'Disponível',
+    ownership_type: 'Próprio',
     purchase_cost: 400000,
     purchase_date: '2023-01-15',
     sale_date: null,
-    description: 'Luxuoso SUV com motor potente V8 de 530cv, acabamento premium em couro, sistema de entretenimento de última geração e pacote completo de segurança.',
+    description: 'O BMW X5 M50i combina o design de um SUV de luxo com o desempenho de um carro esportivo. Com um motor V8 biturbo de 4.4 litros gerando 530 cavalos de potência, o X5 M50i oferece aceleração impressionante e uma experiência de condução dinâmica. O interior espaçoso e repleto de tecnologia proporciona conforto excepcional para todos os ocupantes.',
     additionalFeatures: [
-      { id: 1, name: 'Teto Solar Panorâmico', price: 12000, selected: false },
-      { id: 2, name: 'Sistema de Som Premium', price: 8500, selected: false },
-      { id: 3, name: 'Assistente de Estacionamento', price: 5000, selected: false },
-      { id: 4, name: 'Interior em Couro Nappa', price: 9800, selected: false },
-      { id: 5, name: 'Pacote Off-road', price: 15000, selected: false },
+      { id: 1, name: 'Teto Solar Panorâmico', price: 8000, selected: false },
+      { id: 2, name: 'Sistema de Som Harman Kardon', price: 5500, selected: false },
+      { id: 3, name: 'Pacote de Assistência ao Motorista', price: 7000, selected: false },
+      { id: 4, name: 'Rodas de Liga Leve 22"', price: 6000, selected: false },
+      { id: 5, name: 'Pacote Interior de Couro Nappa', price: 9000, selected: false }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1556189250-72ba954cfc2b?q=80&w=1000',
-      'https://images.unsplash.com/photo-1635769507876-8ad657c33fca?q=80&w=1000',
-      'https://images.unsplash.com/photo-1583356322882-85559b472e6c?q=80&w=1000',
-    ]
+    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
   },
   {
     id: 2,
@@ -87,58 +65,74 @@ const mockCars: Car[] = [
     brand: 'Mercedes',
     category: 'Sedan',
     status: 'Vendido',
+    ownership_type: 'Consignado',
     purchase_cost: 350000,
     purchase_date: '2023-01-10',
     sale_date: '2023-05-20',
-    description: 'Sedan esportivo de alto desempenho, com motor 2.0 turbo de 402cv, interior esportivo de luxo com detalhes AMG e tecnologia MBUX de última geração.',
+    description: 'O Mercedes-AMG C43 oferece um equilíbrio perfeito entre luxo e desempenho. Com um motor de 4 cilindros turbo de 2.0 litros capaz de gerar 402 cavalos de potência, o C43 proporciona aceleração impressionante e agilidade nas curvas. O interior sofisticado e tecnológico, combinado com o design esportivo AMG, cria uma experiência de direção verdadeiramente premium.',
     additionalFeatures: [
-      { id: 1, name: 'Pacote Night', price: 7500, selected: false },
-      { id: 2, name: 'Head-up Display', price: 6000, selected: false },
-      { id: 3, name: 'Sistema Burmester 3D', price: 12000, selected: false },
-      { id: 4, name: 'Bancos AMG Performance', price: 8500, selected: false },
+      { id: 1, name: 'Pacote AMG Night', price: 5000, selected: false },
+      { id: 2, name: 'Sistema de Som Burmester', price: 6500, selected: false },
+      { id: 3, name: 'Head-up Display', price: 4800, selected: false },
+      { id: 4, name: 'Teto Solar Panorâmico', price: 7000, selected: false }
     ],
-    images: [
-      'https://images.unsplash.com/photo-1563720223523-491fd7a975c4?q=80&w=1000',
-      'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?q=80&w=1000',
-      'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?q=80&w=1000',
-    ]
-  },
+    images: ['/placeholder.svg', '/placeholder.svg', '/placeholder.svg']
+  }
 ];
 
 const CarDetail = () => {
   const { id } = useParams<{ id: string }>();
   const [car, setCar] = useState<Car | null>(null);
-  const [activeImage, setActiveImage] = useState<number>(0);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [totalPrice, setTotalPrice] = useState(0);
   const [selectedFeatures, setSelectedFeatures] = useState<AdditionalFeature[]>([]);
-  const [totalPrice, setTotalPrice] = useState<number>(0);
 
   useEffect(() => {
-    // In a real application, fetch data from an API
     const foundCar = mockCars.find(c => c.id === Number(id));
+    
     if (foundCar) {
       setCar(foundCar);
       setTotalPrice(foundCar.price);
+      
+      if (foundCar.additionalFeatures) {
+        const initialSelected = foundCar.additionalFeatures.filter(feature => feature.selected);
+        setSelectedFeatures(initialSelected);
+      }
     }
   }, [id]);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  if (!car) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Carregando detalhes do veículo...</p>
+      </div>
+    );
+  }
+  
+  // Don't show detail page for sold cars
+  if (car.status === 'Vendido') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="container mx-auto px-6 py-20 text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">Veículo Indisponível</h1>
+          <p className="text-xl text-gray-600 mb-8">Este veículo não está mais disponível para visualização.</p>
+          <Link to="/catalog">
+            <Button className="bg-blue-600 hover:bg-blue-700">
+              <ArrowLeft className="h-4 w-4 mr-2" /> Voltar ao Catálogo
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
-  const formatMileage = (mileage: number) => {
-    return new Intl.NumberFormat('pt-BR').format(mileage) + ' km';
-  };
-
-  const handleFeatureToggle = (featureId: number, checked: boolean) => {
-    if (!car) return;
+  const handleFeatureToggle = (featureId: number) => {
+    if (!car.additionalFeatures) return;
     
     const updatedFeatures = car.additionalFeatures.map(feature => {
       if (feature.id === featureId) {
-        return { ...feature, selected: checked };
+        return { ...feature, selected: !feature.selected };
       }
       return feature;
     });
@@ -152,262 +146,183 @@ const CarDetail = () => {
     setCar(updatedCar);
     
     // Calculate total price including selected features
-    const selectedFeaturesArr = updatedFeatures.filter(f => f.selected);
-    setSelectedFeatures(selectedFeaturesArr);
+    const selectedFeatures = updatedFeatures.filter(feature => feature.selected);
+    const featuresTotal = selectedFeatures.reduce((sum, feature) => sum + feature.price, 0);
     
-    const featuresTotal = selectedFeaturesArr.reduce((sum, feature) => sum + feature.price, 0);
     setTotalPrice(car.price + featuresTotal);
+    setSelectedFeatures(selectedFeatures);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const formatMileage = (mileage: number) => {
+    return new Intl.NumberFormat('pt-BR').format(mileage) + ' km';
   };
 
   const createWhatsAppLink = () => {
-    if (!car) return '';
+    let message = `Olá! Estou interessado no veículo ${car.name} (ID: ${car.id}) no valor de ${formatPrice(car.price)}.`;
     
-    const selectedFeaturesText = selectedFeatures.length > 0 
-      ? `\nAdicionais selecionados: ${selectedFeatures.map(f => f.name).join(', ')}` 
-      : '';
-      
-    const message = encodeURIComponent(
-      `Olá! Estou interessado no veículo ${car.name} (ID: ${car.id}) no valor de ${formatPrice(totalPrice)}.${selectedFeaturesText}`
-    );
+    if (selectedFeatures.length > 0) {
+      message += '\n\nOpcionais selecionados:';
+      selectedFeatures.forEach(feature => {
+        message += `\n- ${feature.name}: ${formatPrice(feature.price)}`;
+      });
+      message += `\n\nValor total: ${formatPrice(totalPrice)}`;
+    }
     
-    return `https://wa.me/5511999999999?text=${message}`;
+    return `https://wa.me/5511999999999?text=${encodeURIComponent(message)}`;
   };
-
-  if (!car) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="container mx-auto py-12 px-4">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold">Veículo não encontrado</h2>
-            <p className="mt-4">O veículo que você está procurando não está disponível.</p>
-            <Link to="/catalog">
-              <Button className="mt-6">Voltar para o catálogo</Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="container mx-auto py-8 px-4">
-        {/* Breadcrumb navigation */}
-        <div className="mb-6">
-          <Link to="/catalog" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            <span>Voltar ao catálogo</span>
-          </Link>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Image gallery */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl overflow-hidden shadow-lg">
-              <div className="relative aspect-[16/9]">
-                <img 
-                  src={car.images[activeImage]} 
-                  alt={car.name} 
-                  className="w-full h-full object-cover"
+      {/* Main Content */}
+      <div className="container mx-auto px-6 py-8">
+        {/* Back Button */}
+        <Link to="/catalog" className="inline-flex items-center mb-6 text-blue-600 hover:text-blue-800">
+          <ArrowLeft className="h-5 w-5 mr-2" />
+          Voltar ao Catálogo
+        </Link>
+
+        {/* Car Details */}
+        <Card className="overflow-hidden">
+          <CardHeader className="p-6">
+            <CardTitle className="text-2xl font-bold text-gray-900">{car.name}</CardTitle>
+            <CardDescription className="text-gray-600">
+              {car.year} • {formatMileage(car.mileage)} • {car.fuel}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="p-6">
+            {/* Image Gallery */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div className="md:order-2">
+                <img
+                  src={car.images && car.images[activeImageIndex]}
+                  alt={car.name}
+                  className="w-full h-full object-cover rounded-lg aspect-video"
                 />
-                
-                <div className="absolute top-4 right-4 space-x-2">
-                  <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                    <Heart className="h-5 w-5 text-gray-600 hover:text-red-500" />
-                  </button>
-                  <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors">
-                    <Share2 className="h-5 w-5 text-gray-600" />
-                  </button>
-                </div>
-                
-                {car.status !== 'Disponível' && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="bg-red-600 text-white px-6 py-3 rounded-lg text-xl font-bold uppercase transform rotate-12">
-                      {car.status}
-                    </div>
-                  </div>
-                )}
               </div>
-              
-              <div className="p-4 flex space-x-2 overflow-x-auto">
-                {car.images.map((image, index) => (
-                  <button 
-                    key={index}
-                    onClick={() => setActiveImage(index)}
-                    className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden ${index === activeImage ? 'ring-2 ring-blue-500' : 'ring-1 ring-gray-200'}`}
-                  >
-                    <img 
-                      src={image} 
-                      alt={`${car.name} - Image ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
+              <div className="md:order-1">
+                <div className="grid grid-cols-3 gap-2">
+                  {car.images && car.images.map((image, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setActiveImageIndex(index)}
+                      className={`aspect-square rounded-lg overflow-hidden ${activeImageIndex === index ? 'ring-2 ring-blue-500' : 'hover:opacity-75 transition-opacity'}`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${car.name} - Imagem ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-            
-            {/* Vehicle specifications */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Especificações do Veículo</h3>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Marca</span>
-                    <span className="font-medium">{car.brand}</span>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Ano</span>
-                    <div className="flex items-center">
-                      <Calendar className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">{car.year}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Quilometragem</span>
-                    <div className="flex items-center">
-                      <Gauge className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">{formatMileage(car.mileage)}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Combustível</span>
-                    <div className="flex items-center">
-                      <Fuel className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">{car.fuel}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Transmissão</span>
-                    <div className="flex items-center">
-                      <Settings className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">{car.transmission}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col space-y-1">
-                    <span className="text-sm text-gray-500">Categoria</span>
-                    <div className="flex items-center">
-                      <CarIcon className="h-4 w-4 mr-2 text-gray-400" />
-                      <span className="font-medium">{car.category}</span>
-                    </div>
-                  </div>
+
+            {/* Price and Description */}
+            <div className="md:flex md:items-start md:justify-between mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-blue-600 mb-4">
+                  {formatPrice(totalPrice)}
+                </h2>
+                <p className="text-gray-700">{car.description}</p>
+              </div>
+              <div className="mt-4 md:mt-0">
+                <Button className="bg-green-600 hover:bg-green-700 flex items-center justify-center">
+                  <WhatsappIcon className="h-4 w-4 mr-2" />
+                  <a href={createWhatsAppLink()} target="_blank" rel="noopener noreferrer">
+                    Entrar em Contato
+                  </a>
+                </Button>
+              </div>
+            </div>
+
+            {/* Car Details */}
+            <Separator className="my-4" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Calendar className="h-4 w-4" />
+                <span>{car.year}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Gauge className="h-4 w-4" />
+                <span>{formatMileage(car.mileage)}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Fuel className="h-4 w-4" />
+                <span>{car.fuel}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <CarIcon className="h-4 w-4" />
+                <span>{car.transmission}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Cog className="h-4 w-4" />
+                <span>{car.brand}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Cog className="h-4 w-4" />
+                <span>{car.category}</span>
+              </div>
+            </div>
+
+            {/* Additional Features */}
+            {car.additionalFeatures && car.additionalFeatures.length > 0 && (
+              <>
+                <Separator className="my-4" />
+                <div className="mb-4">
+                  <h4 className="text-xl font-bold text-gray-900 mb-2">Opcionais</h4>
+                  <p className="text-gray-600">Selecione os opcionais desejados:</p>
                 </div>
-              </CardContent>
-            </Card>
-            
-            {/* Car description */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="text-lg font-semibold mb-4">Sobre este veículo</h3>
-                <p className="text-gray-700 leading-relaxed">{car.description}</p>
-              </CardContent>
-            </Card>
-          </div>
-          
-          {/* Right sidebar with pricing and actions */}
-          <div className="space-y-6">
-            <Card className="sticky top-6">
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold">{car.name}</h2>
-                <div className="flex items-center mt-1 mb-6">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    car.status === 'Disponível' 
-                      ? 'bg-green-100 text-green-800' 
-                      : car.status === 'Vendido'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {car.status}
-                  </span>
-                </div>
-                
-                <div className="mb-6">
-                  <div className="text-sm text-gray-500 mb-1">Preço Base</div>
-                  <div className="text-3xl font-bold text-gray-900">{formatPrice(car.price)}</div>
-                </div>
-                
-                {/* Additional features */}
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <h3 className="text-lg font-semibold mb-3">Adicionais Disponíveis</h3>
-                  
-                  <div className="space-y-3">
-                    {car.additionalFeatures.map((feature) => (
-                      <div key={feature.id} className="flex items-center justify-between">
-                        <div className="flex items-start space-x-2">
-                          <Checkbox 
-                            id={`feature-${feature.id}`} 
-                            checked={feature.selected}
-                            onCheckedChange={(checked) => handleFeatureToggle(feature.id, checked === true)}
-                            disabled={car.status !== 'Disponível'}
-                          />
-                          <label 
-                            htmlFor={`feature-${feature.id}`}
-                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                          >
-                            {feature.name}
-                          </label>
-                        </div>
-                        <span className="text-sm font-medium">
-                          {formatPrice(feature.price)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Total price */}
-                <div className="border-t border-gray-200 pt-4 mb-6">
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-medium">Preço Total</span>
-                    <span className="text-2xl font-bold text-blue-600">{formatPrice(totalPrice)}</span>
-                  </div>
-                  
-                  {selectedFeatures.length > 0 && (
-                    <div className="mt-2 text-sm text-gray-500">
-                      * Inclui {selectedFeatures.length} adicionais selecionados
-                    </div>
-                  )}
-                </div>
-                
-                {/* Action buttons */}
-                <div className="space-y-3">
-                  {car.status === 'Disponível' && (
-                    <>
-                      <a 
-                        href={createWhatsAppLink()} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="w-full"
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {car.additionalFeatures.map(feature => (
+                    <div key={feature.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`feature-${feature.id}`}
+                        checked={feature.selected}
+                        onCheckedChange={() => handleFeatureToggle(feature.id)}
+                      />
+                      <label
+                        htmlFor={`feature-${feature.id}`}
+                        className="text-sm font-medium text-gray-900"
                       >
-                        <Button className="w-full bg-green-600 hover:bg-green-700 flex items-center justify-center">
-                          <WhatsappIcon className="h-5 w-5 mr-2" />
-                          Contatar via WhatsApp
-                        </Button>
-                      </a>
-                      
-                      <Button variant="outline" className="w-full">
-                        Agendar Test Drive
-                      </Button>
-                    </>
-                  )}
-                  
-                  <Button variant="outline" className="w-full">
-                    <Heart className="h-4 w-4 mr-2" />
-                    Adicionar aos Favoritos
-                  </Button>
+                        {feature.name} (+{formatPrice(feature.price)})
+                      </label>
+                    </div>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              </>
+            )}
+          </CardContent>
+
+          <CardFooter className="flex items-center justify-between p-6">
+            <div className="flex space-x-3">
+              <Button variant="outline">
+                <Heart className="h-4 w-4 mr-2" />
+                Favoritar
+              </Button>
+              <Button variant="outline">
+                <Share2 className="h-4 w-4 mr-2" />
+                Compartilhar
+              </Button>
+            </div>
+            <div>
+              <span className="text-sm text-gray-500">
+                ID do veículo: {car.id}
+              </span>
+            </div>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );
