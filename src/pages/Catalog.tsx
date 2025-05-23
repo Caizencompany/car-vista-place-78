@@ -143,10 +143,10 @@ const Catalog = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [showSearchDialog, setShowSearchDialog] = useState(false);
 
-  const brands = [...new Set(cars.map(car => car.brand))];
-  const categories = [...new Set(cars.map(car => car.category))];
-  const fuels = [...new Set(cars.map(car => car.fuel))];
-  const transmissions = [...new Set(cars.map(car => car.transmission))];
+  const brands = [...new Set(availableCars.map(car => car.brand))];
+  const categories = [...new Set(availableCars.map(car => car.category))];
+  const fuels = [...new Set(availableCars.map(car => car.fuel))];
+  const transmissions = [...new Set(availableCars.map(car => car.transmission))];
 
   // Filter out sold cars when initializing the component and when cars change
   useEffect(() => {
