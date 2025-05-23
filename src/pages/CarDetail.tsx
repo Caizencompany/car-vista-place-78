@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -86,6 +87,7 @@ const CarDetail = () => {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
   const [selectedFeatures, setSelectedFeatures] = useState<AdditionalFeature[]>([]);
+  const [carImages, setCarImages] = useState<string[]>([]);
 
   useEffect(() => {
     const foundCar = mockCars.find(c => c.id === Number(id));
@@ -93,6 +95,15 @@ const CarDetail = () => {
     if (foundCar) {
       setCar(foundCar);
       setTotalPrice(foundCar.price);
+      
+      // Configurar imagens do carro (pode ser um array ou uma única imagem)
+      if (foundCar.images && foundCar.images.length > 0) {
+        setCarImages(foundCar.images);
+      } else if (foundCar.image) {
+        setCarImages([foundCar.image]);
+      } else {
+        setCarImages(['/placeholder.svg']);
+      }
       
       if (foundCar.additionalFeatures) {
         const initialSelected = foundCar.additionalFeatures.filter(feature => feature.selected);
@@ -205,14 +216,14 @@ const CarDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div className="md:order-2">
                 <img
-                  src={car.images && car.images[activeImageIndex]}
+                  src={carImages[activeImageIndex]}
                   alt={car.name}
                   className="w-full h-full object-cover rounded-lg aspect-video"
                 />
               </div>
               <div className="md:order-1">
                 <div className="grid grid-cols-3 gap-2">
-                  {car.images && car.images.map((image, index) => (
+                  {carImages.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setActiveImageIndex(index)}
@@ -235,7 +246,7 @@ const CarDetail = () => {
                 <h2 className="text-3xl font-bold text-blue-600 mb-4">
                   {formatPrice(totalPrice)}
                 </h2>
-                <p className="text-gray-700">{car.description}</p>
+                {car.description && <p className="text-gray-700">{car.description}</p>}
               </div>
               <div className="mt-4 md:mt-0">
                 <Button className="bg-green-600 hover:bg-green-700 flex items-center justify-center">

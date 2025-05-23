@@ -1,8 +1,4 @@
 
-// Se este arquivo existe, você precisa atualizar o tipo BuyerInfo para adicionar o campo profit.
-// Como eu não tenho acesso ao conteúdo completo deste arquivo, vou adicionar o que imagino que seja necessário.
-// Se o arquivo tiver uma estrutura diferente, você precisará ajustar esta implementação.
-
 export type CarStatus = 'Disponível' | 'Vendido' | 'Consignado';
 export type OwnershipType = 'Próprio' | 'Consignado';
 
@@ -20,7 +16,7 @@ export interface BuyerInfo {
   saleDate: string;
   salePrice: number;
   commission?: number;
-  profit?: number; // Novo campo para armazenar o lucro
+  profit?: number; // Campo para armazenar o lucro
 }
 
 export interface OwnerInfo {
@@ -46,6 +42,8 @@ export interface Car {
   purchase_date: string;
   sale_date: string | null;
   image?: string;
+  images?: string[]; // Array de imagens do carro
+  description?: string; // Descrição do veículo
   additionalFeatures?: AdditionalFeature[];
   buyerInfo?: BuyerInfo;
   ownerInfo?: OwnerInfo;
